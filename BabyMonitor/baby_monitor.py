@@ -2,7 +2,7 @@
 import pika
 from time import sleep
 import sys
-import generate_data as gd
+from generate_data import data_from_baby
 import random
 sys.path.append('../')
 from construct_scenario import bm, engine
@@ -22,9 +22,15 @@ routing_key = 'baby_monitor_data'
 #Define the message
 message = 'Hello I am BabyMonitor =)'
 
+#Sends the message
 for i in range(100):
-    print(gd.data_from_baby())
-    message = str(get_data_baby_monitor(bm, engine))
+    data_from_baby()
+
+    line = get_data_baby_monitor(bm, engine)
+
+    keys = ('id', 'breathing', 'time_no_breathing', 'crying', 'sleeping')
+
+    message = str(dict(zip(keys, line)))
     channel.basic_publish(exchange='exchange_baby_monitor', routing_key=routing_key, body=message)
 
     print(" [x] Sent Topic: %r | Message: %r" % (routing_key, message))

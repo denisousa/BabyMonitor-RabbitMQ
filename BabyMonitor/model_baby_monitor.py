@@ -25,4 +25,8 @@ def insert_baby_monitor(bm, engine, data):
 def get_data_baby_monitor(bm, engine):
     conn = engine.connect()
     query = db.select([bm])
-    return conn.execute(query).fetchall()[-1]
+    result = conn.execute(query).fetchall()
+    if result: 
+        return result[-1]
+    else: 
+        return 0 
