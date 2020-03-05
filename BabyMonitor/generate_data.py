@@ -1,17 +1,39 @@
 from sqlalchemy.sql import select
 import random
-import model_baby_monitor
+from model_baby_monitor import insert_baby_monitor
+import sys
+sys.path.append('../')
+from construct_scenario import bm, engine
+
+print(bm, engine)
 
 crying = False
 sleeping = True
 breathing = True
 time_no_breathing = 0
+max_no_changes = random.randint(3,5)
 
-def data_from_baby(count):
+
+def count(function):
+    def wrapped():
+        global max_no_changes
+        if wrapped.calls < max_no_changes:
+            wrapped.calls += 1
+            return 1 
+        else:        
+            wrapped.calls = 0 
+            max_no_changes = random.randint(3,5)
+            return function()
+    
+    wrapped.calls = 0
+    return wrapped
+
+@count
+def data_from_baby():
     global crying, sleeping, breathing, time_no_breathing
 
-    if count == 0:
-        crying = random.choices([True, False], [0.25,0.75], k=1)[0]
+    
+    crying = random.choices([True, False], [0.25,0.75], k=1)[0]
 
     if crying:
         sleeping = False
@@ -28,5 +50,9 @@ def data_from_baby(count):
         else: 
             time_no_breathing = 0
     
-    return {'breathing': breathing, 'time_no_breathing': time_no_breathing, 'crying': crying, 'sleeping': sleeping}
+    data = {'breathing': breathing, 'time_no_breathing': time_no_breathing, 'crying': crying, 'sleeping': sleeping}
+    
+    #AOP aqui
+    insert_baby_monitor(bm, engine, data)
+    return data
 

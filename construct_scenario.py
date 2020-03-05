@@ -10,12 +10,3 @@ meta = MetaData()
 bm = create_table_baby_monitor(engine, meta)
 smt = create_table_smartphone(engine, meta)
 tv = create_table_smart_tv(engine, meta)
-
-for i in range(10):
-    insert_baby_monitor(bm, engine)
-
-for i in range(10):
-    insert_smartphone(smt, engine)
-
-for i in range(10):
-    insert_smart_tv(tv, engine)
