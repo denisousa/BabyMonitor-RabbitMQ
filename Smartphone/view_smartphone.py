@@ -31,9 +31,17 @@ class Window(QMainWindow):
         self.receive.setText('<strong>Receive<\strong>')
         self.receive.move(60, 150)
 
+        self.receive_information = QLabel(self)
+        self.receive_information.setText('Information')
+        self.receive_information.move(60, 180)
+
         self.send = QLabel(self)
         self.send.setText('<strong>Send<\strong>')
         self.send.move(60, 250)
+
+        self.send_information = QLabel(self)
+        self.send_information.setText('information')
+        self.send_information.move(60, 280)
 
         self.setWindowIcon(QtGui.QIcon('smartphone.png'))
         self.setWindowTitle(self.title)

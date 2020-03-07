@@ -2,34 +2,26 @@
 import pika
 import sys
 import random
+import sys
+sys.path.append('../')
+from construct_scenario import queue_smartphone, queue_smartv, routing_key_smart_tv, routing_key_smartphone, exchange_baby_monitor
 
 #Connection with RabbitMQ (Broker)
 connection = pika.BlockingConnection(
     pika.ConnectionParameters(host='localhost'))
 channel = connection.channel()
 
-queue_baby_monitor = 'queue_baby_monitor'
-queue_smartphone = 'queue_smartphone'
-routing_key_one = 'baby_monitor_data'
-routing_key_second = 'smart_tv_data'
-exchange_baby_monitor = 'exchange_baby_monitor'
-
-#Declare exchange of the type 'topic' with name 'exchange_baby_monitor'
-channel.exchange_declare(exchange=exchange_baby_monitor, exchange_type='topic')
-channel.queue_declare(queue_baby_monitor, exclusive=True)
-channel.queue_declare(queue_smartphone, exclusive=True)
+channel.queue_bind(
+        exchange='exchange_baby_monitor', queue=queue_smartphone, routing_key=routing_key_smartphone)
 
 channel.queue_bind(
-        exchange=exchange_baby_monitor, queue=queue_baby_monitor, routing_key=routing_key_one)
-
-channel.queue_bind(
-        exchange=exchange_baby_monitor, queue=queue_smartphone, routing_key=routing_key_second)
+        exchange='exchange_baby_monitor', queue=queue_smartv, routing_key=routing_key_smart_tv)
 
 
 print(' [*] Waiting for messages. To exit press CTRL+C')
 
 def forward_to_tv(message):
-    channel.basic_publish(exchange='exchange_smart_tv', routing_key=routing_key_second, body=message)
+    channel.basic_publish(exchange=exchange_baby_monitor, routing_key=routing_key_smart_tv, body="ALERT! Emma isn't breathing")
 
 def read_message(message):
     message = eval(message)
@@ -43,10 +35,6 @@ def read_message(message):
 def callback(ch, method, properties, body):
     print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
     read_message(body)
-    
-
-channel.basic_consume(
-    queue=queue_baby_monitor, on_message_callback=callback, auto_ack=True)
 
 channel.basic_consume(
     queue=queue_smartphone, on_message_callback=callback, auto_ack=True)
