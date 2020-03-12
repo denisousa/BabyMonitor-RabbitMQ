@@ -1,23 +1,29 @@
 import pika
 from time import sleep
 import sys
-from generate_data import data_from_baby
+from generate_data import *
 sys.path.append('../')
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, Boolean
-from construct_scenario import bm, engine, routing_key_smartphone
+from construct_scenario import *
 import sqlalchemy as db
+import threading
 
 
-class Baby_Monitor():
-    def __init__(self, connection, channel):
-        self.connection = connection
-        self.channel = channel
+class Baby_Monitor(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.connection = pika.BlockingConnection(
+            pika.ConnectionParameters(host='localhost'))
+        self.channel = self.connection.channel()
+        self.bm = self.create_table_baby_monitor()
+        self.button_is_pressed = False
 
-    def start_connection():
-        while True:
-            data_from_baby()
+    def run(self):
 
-            line = get_data_baby_monitor(bm, engine)
+        while self.button_is_pressed:
+            data_from_baby(self)
+
+            line = self.get_data_baby_monitor()
 
             keys = ('id', 'breathing', 'time_no_breathing', 'crying', 'sleeping')
 
@@ -26,30 +32,37 @@ class Baby_Monitor():
 
             print(" [x] Sent Topic: %r | Message: %r" % (routing_key_smartphone, message))
             sleep(2)
+        
+        print('Closing connection...')
+        self.connection.close()
 
-    def create_table_baby_monitor(engine, meta):
-        baby_monitor_table = Table(
-            "baby_monitor",
-            meta,
-            Column("id", Integer, primary_key=True, autoincrement=True),
-            Column("breathing", Boolean),
-            Column("time_no_breathing", Integer),
-            Column("crying", Boolean),
-            Column("sleeping", Boolean),
-        )
-        meta.create_all(engine)
+    def create_table_baby_monitor(self):
+        try:
+            baby_monitor_table = Table(
+                "baby_monitor",
+                meta,
+                Column("id", Integer, primary_key=True, autoincrement=True),
+                Column("breathing", Boolean),
+                Column("time_no_breathing", Integer),
+                Column("crying", Boolean),
+                Column("sleeping", Boolean),
+            )
+            meta.create_all(engine)
 
-        return baby_monitor_table
+            return baby_monitor_table
+        except:
+            connection = engine.connect()
+            bm = db.Table('baby_monitor', meta, autoload=True, autoload_with=engine)
+            return bm
 
-
-    def insert_baby_monitor(bm, engine, data):
+    def insert_baby_monitor(self, data):
         conn = engine.connect()
-        query = bm.insert()
+        query = self.bm.insert()
         conn.execute(query, data)
 
-    def get_data_baby_monitor(bm, engine):
+    def get_data_baby_monitor(self):
         conn = engine.connect()
-        query = db.select([bm])
+        query = db.select([self.bm])
         result = conn.execute(query).fetchall()
         if result: 
             return result[-1]

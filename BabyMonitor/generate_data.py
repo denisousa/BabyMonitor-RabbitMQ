@@ -1,9 +1,9 @@
 from sqlalchemy.sql import select
 import random
-from model_baby_monitor import insert_baby_monitor, get_data_baby_monitor
+import model_baby_monitor
 import sys
 sys.path.append('../')
-from construct_scenario import bm, engine
+from construct_scenario import *
 
 crying = False
 sleeping = True
@@ -14,28 +14,28 @@ max_no_changes = random.randint(5,15)
 
 def count(function):
     
-    def wrapped():
+    def wrapped(monitor):
         
         global max_no_changes, breathing
         if wrapped.calls < max_no_changes:
             wrapped.calls += 1
             if wrapped.calls == 1:  
-                return function(0)
+                return function(0, monitor)
             elif breathing:
                 return 1 
             else: 
-                return function(wrapped.calls)
+                return function(wrapped.calls, monitor)
 
         else:        
             wrapped.calls = 0 
             max_no_changes = random.randint(3,5)
-            return function(0)
+            return function(0, monitor)
     
     wrapped.calls = 0
     return wrapped
 
 @count
-def data_from_baby(flag):
+def data_from_baby(flag, monitor):
     global crying, sleeping, breathing, time_no_breathing
 
     data = {}
@@ -60,11 +60,11 @@ def data_from_baby(flag):
         
         data = {'breathing': breathing, 'time_no_breathing': time_no_breathing, 'crying': crying, 'sleeping': sleeping}
     else: 
-        line = get_data_baby_monitor(bm, engine)
+        line = monitor.get_data_baby_monitor()
         keys = ('id', 'breathing', 'time_no_breathing', 'crying', 'sleeping')
         data = dict(zip(keys, line))
         data['time_no_breathing'] += 1
         data.pop('id')
 
-    insert_baby_monitor(bm, engine, data)
+    monitor.insert_baby_monitor(data)
     return data

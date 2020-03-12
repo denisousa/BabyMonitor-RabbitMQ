@@ -2,22 +2,24 @@
 import pika
 from time import sleep
 import sys
-from generate_data import data_from_baby
 sys.path.append('../')
-from construct_scenario import bm, engine, routing_key_smartphone
-import model_baby_monitor
+from construct_scenario import engine, meta
+from model_baby_monitor import Baby_Monitor
 
-#código feito só pra teste, Denis livre pra adaptar a interface
-    
+monitor = None
+
+#start conection
 def start():
-
-    #Connection with RabbitMQ (Broker)
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(host='localhost'))
-    channel = connection.channel()
-
-    monitor = Baby_Monitor(connection, channel)
-    monitor.start_connection()        
-
+    global monitor
+    monitor = Baby_Monitor()
+    monitor.button_is_pressed = True
+    monitor.start()      
+    
+#stop conection
 def stop():
-    pass
+    monitor.button_is_pressed = False
+
+#get data from db
+def get_data():
+    return monitor.get_data_baby_monitor()
+    
