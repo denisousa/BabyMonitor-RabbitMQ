@@ -19,38 +19,43 @@ class Window(QMainWindow):
         self.height = 1000
         self.InitWindow()
         self.button = False
+        self.start_thread = False
 
-    def button_pressed(self):
-        self.button = not self.button
-        if self.button:
-            thread_status = threading.Thread(target = self.show_message, args = ())
-            thread_status.start()
-            start()
-        else: 
-            stop()
+    def button_pressed_start(self):
+        thread_status = threading.Thread(target = self.show_message, args = ())
+        thread_status.start()
+        self.button = True
+        self.start_thread = True
+        start()
+    
+    def button_pressed_stop(self):
+        self.button = False
+        self.start_thread = False
+        stop()
         
     def show_message(self):
-        while True: 
-            data = get_data()
-            self.send_breathing.setText('Breathing: {}'.format(data['breathing']))
-            self.send_breathing.setFont(QtGui.QFont('Arial', 12)) 
-            self.send_breathing.adjustSize()
-            self.send_breathing.move(60, 130)
+        while True:
+            if self.start_thread: 
+                data = get_data()
+                self.send_breathing.setText('Breathing: {}'.format(data['breathing']))
+                self.send_breathing.setFont(QtGui.QFont('Arial', 12)) 
+                self.send_breathing.adjustSize()
+                self.send_breathing.move(60, 130)
 
-            self.send_time_no_breathing.setText('Time no Breathing: {}'.format(data['time_no_breathing']))
-            self.send_time_no_breathing.setFont(QtGui.QFont('Arial', 12)) 
-            self.send_time_no_breathing.adjustSize() 
-            self.send_time_no_breathing.move(60, 150)
+                self.send_time_no_breathing.setText('Time no Breathing: {}'.format(data['time_no_breathing']))
+                self.send_time_no_breathing.setFont(QtGui.QFont('Arial', 12)) 
+                self.send_time_no_breathing.adjustSize() 
+                self.send_time_no_breathing.move(60, 150)
 
-            self.send_crying.setText('Crying: {}'.format(data['crying']))
-            self.send_crying.setFont(QtGui.QFont('Arial', 12)) 
-            self.send_crying.adjustSize() 
-            self.send_crying.move(60, 170)
+                self.send_crying.setText('Crying: {}'.format(data['crying']))
+                self.send_crying.setFont(QtGui.QFont('Arial', 12)) 
+                self.send_crying.adjustSize() 
+                self.send_crying.move(60, 170)
 
-            self.send_sleeping.setText('Sleeping: {}'.format(data['sleeping']))
-            self.send_sleeping.setFont(QtGui.QFont('Arial', 12)) 
-            self.send_sleeping.adjustSize() 
-            self.send_sleeping.move(60, 190)
+                self.send_sleeping.setText('Sleeping: {}'.format(data['sleeping']))
+                self.send_sleeping.setFont(QtGui.QFont('Arial', 12)) 
+                self.send_sleeping.adjustSize() 
+                self.send_sleeping.move(60, 190)
 
 
     def InitWindow(self):
@@ -79,11 +84,11 @@ class Window(QMainWindow):
         
         self.button = QPushButton('Start', self)
         self.button.move(540, 600)
-        self.button.clicked.connect(self.button_pressed)
+        self.button.clicked.connect(self.button_pressed_start)
 
         self.button = QPushButton('Stop', self)
         self.button.move(660, 600)
-        self.button.clicked.connect(self.button_pressed)
+        self.button.clicked.connect(self.button_pressed_stop)
 
         self.setWindowIcon(QtGui.QIcon("babymonitor.png"))
         self.setWindowTitle(self.title)

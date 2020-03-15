@@ -4,7 +4,7 @@ import sys
 from generate_data import *
 sys.path.append('../')
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, Boolean
-from construct_scenario import main
+from construct_scenario import *
 import sqlalchemy as db
 import threading
 import sqlite3
@@ -12,11 +12,11 @@ import sqlite3
 
 class Baby_Monitor(threading.Thread):
     def __init__(self):
-        self.engine = main[0]
-        self.meta = main[1]
-        self.channel = main[2]
-        self.exchange_baby_monitor = main[7]
-        self.routing_key_smartphone = main[6]
+        self.engine = engine
+        self.meta = meta
+        self.channel = channel
+        self.exchange_baby_monitor = exchange_baby_monitor
+        self.routing_key_smartphone = routing_key_smartphone
         
         threading.Thread.__init__(self)
         self.connection = pika.BlockingConnection(
@@ -26,7 +26,6 @@ class Baby_Monitor(threading.Thread):
         self.button_is_pressed = False
 
     def run(self):
-
         while self.button_is_pressed:
             data_from_baby(self)
 

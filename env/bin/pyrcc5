@@ -1,6 +1,4 @@
-#!/bin/sh
-'''exec' "/home/adrilene/Área de Trabalho/BabyMonitor-RabbitMQ/env/bin/python3" "$0" "$@"
-' '''
+#!/home/robot/Documentos/BabyMonitor-RabbitMQ/env/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

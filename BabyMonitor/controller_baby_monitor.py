@@ -10,7 +10,7 @@ monitor = Baby_Monitor()
 #start conection
 def start():
     global monitor
-    
+    monitor = Baby_Monitor()
     monitor.button_is_pressed = True
     monitor.start()      
     

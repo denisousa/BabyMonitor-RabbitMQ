@@ -29,7 +29,7 @@ end
 # unset irrelevant variables
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "/home/adrilene/Área de Trabalho/BabyMonitor-RabbitMQ/env"
+set -gx VIRTUAL_ENV "/home/robot/Documentos/BabyMonitor-RabbitMQ/env"
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/bin" $PATH
