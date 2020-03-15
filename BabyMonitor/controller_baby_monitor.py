@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import pika
-from time import sleep
 import sys
 sys.path.append('../')
 from model_baby_monitor import Baby_Monitor

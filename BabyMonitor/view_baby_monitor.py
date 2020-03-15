@@ -22,16 +22,24 @@ class Window(QMainWindow):
         self.start_thread = False
 
     def button_pressed_start(self):
-        thread_status = threading.Thread(target = self.show_message, args = ())
+        thread_status = threading.Thread(target=self.show_message, args=())
         thread_status.start()
         self.button = True
         self.start_thread = True
         start()
+        self.connection.setText('<strong>Open connection<\strong>')
+        self.connection.setFont(QtGui.QFont('Arial', 14))
+        self.connection.adjustSize()
+        self.connection.move(60, 350)
     
     def button_pressed_stop(self):
         self.button = False
         self.start_thread = False
         stop()
+        self.connection.setText('<strong>Closed connection<\strong>')
+        self.connection.setFont(QtGui.QFont('Arial', 14))
+        self.connection.adjustSize()
+        self.connection.move(60, 350)
         
     def show_message(self):
         while True:
@@ -58,6 +66,7 @@ class Window(QMainWindow):
                 self.send_sleeping.move(60, 190)
 
 
+
     def InitWindow(self):
         # Define image
         self.label = QLabel(self)
@@ -77,6 +86,7 @@ class Window(QMainWindow):
         self.send.adjustSize()
         self.send.move(60, 100)
 
+        self.connection = QLabel(self)
         self.send_breathing = QLabel(self)
         self.send_time_no_breathing = QLabel(self)
         self.send_crying = QLabel(self)
