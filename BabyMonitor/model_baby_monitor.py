@@ -14,9 +14,6 @@ class Baby_Monitor(threading.Thread):
         self.engine = engine
         self.meta = meta
         self.channel = channel
-        self.exchange_baby_monitor = exchange_baby_monitor
-        self.routing_key_smartphone = routing_key_smartphone
-        self.queue_babymonitor = queue_babymonitor
         self.is_consumer = False
         self.is_producer = False
         
@@ -29,15 +26,17 @@ class Baby_Monitor(threading.Thread):
         self.button_is_pressed = False
 
     def run(self):
-        def callback(ch, method, properties, body):
-            print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
 
         if self.is_consumer:  
             self.channel.queue_bind(
-            exchange=exchange_baby_monitor, queue=self.queue_babymonitor, routing_key=routing_key_babymonitor)
+            exchange=exchange_baby_monitor, queue = queue_baby_monitor, routing_key=routing_key_baby_monitor)
+        
+            def callback(ch, method, properties, body):
+                print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
+                data_from_baby(self)
 
             self.channel.basic_consume(
-                queue=self.queue_babymonitor, on_message_callback=callback, auto_ack=False)
+                queue= queue_baby_monitor, on_message_callback=callback, auto_ack=True)
 
             self.channel.start_consuming()
         
@@ -56,12 +55,10 @@ class Baby_Monitor(threading.Thread):
                 else: 
                     message = 'STATUS: ' + message 
 
-                self.channel.basic_publish(exchange=self.exchange_baby_monitor, routing_key=self.routing_key_smartphone, body=message)
+                self.channel.basic_publish(exchange=exchange_baby_monitor, routing_key=routing_key_smartphone, body=message)
 
-                print(" [x] Sent Topic: %r | Message: %r" % (self.routing_key_smartphone, message))
+                print(" [x] Sent Topic: %r | Message: %r" % (routing_key_smartphone, message))
                 sleep(2)
-
-
         
         print('Closing connection...')
         self.connection.close()
