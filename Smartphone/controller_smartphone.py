@@ -4,22 +4,24 @@ import sys
 sys.path.append('../')
 from model_smartphone import Smartphone
 
-smartphone = Smartphone()
+smartphone_producer = Smartphone()
+smartphone_consumer = Smartphone()
 
 #start conection
 def start():
-    global smartphone
-    smartphone = Smartphone()
-    smartphone.button_is_pressed = True
-    smartphone.start()
+    global smartphone_producer, smartphone_consumer
 
+    smartphone_consumer.is_consumer = True
+
+
+    
 #stop conection
 def stop():
 	smartphone.button_is_pressed = False
 
 #get data from db
 def get_data():
-	smartphone.get_data_baby_monitor()	
+	smartphone.get_data_baby_monitor()
 
 def confirm_notification():
-    pass
+    smartphone.forward_to_tv()

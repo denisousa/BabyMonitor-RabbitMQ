@@ -23,8 +23,10 @@ class Smartphone(threading.Thread):
 
         self.channel.queue_bind(
                 exchange=exchange_baby_monitor, queue=queue_smart_tv, routing_key=routing_key_smart_tv)
+        
+        self.is_producer = False
+        self.is_consumer = False
 
-        #self.smp = self.create_table_smartphone()
         self.button_is_pressed = False
 
     def run(self):
@@ -42,14 +44,25 @@ class Smartphone(threading.Thread):
         
         self.connection.close()
 
-    def forward_to_tv(self):
-        self.channel.basic_publish(exchange=exchange_baby_monitor, routing_key=routing_key_smart_tv, body="ALERT! Emma isn't breathing")
-
     def read_message(self, message):
-        message = eval(message)
-        if not message['breathing'] and message['time_no_breathing'] > 3:
-            print("ALERT! Emma isn't breathing")
-            self.forward_to_tv() 
+
+        if 'NOTIFICATION' in message: 
+            data = str(message).replace(('NOTIFICATION: ', ''))
+            data = eval(data)
+            
+            if not data['breathing']: 
+                print(f"Alert: Baby Emma hasn't been breathing for {data['time_no_breathing']} seconds!")
+            
+            elif not data['crying']:
+                print('Alert: Baby Emma is crying.')
+        
+        else: 
+            print("It's all ok. :)")    
+
+    
+    def confirm_notification(self):
+        pass
+
 
     '''def create_table_smartphone(self):
         smartphone = Table(

@@ -68,8 +68,9 @@ class Window(QMainWindow):
                     self.alert.setFont(QtGui.QFont('Arial', 12))
                     self.alert.adjustSize()
                     self.alert.move(60, 260)
+                    smartphone.confirm_notification()
                 else:
-                    self.alert.setText("")
+                    self.alert.setText('')
                     self.alert.setFont(QtGui.QFont('Arial', 12))
                     self.alert.adjustSize()
                     self.alert.move(60, 260)

@@ -7,7 +7,6 @@ from sqlalchemy import create_engine, MetaData, Table, Column, Integer, Boolean
 from construct_scenario import *
 import sqlalchemy as db
 import threading
-import sqlite3
 
 
 class Baby_Monitor(threading.Thread):
@@ -17,27 +16,52 @@ class Baby_Monitor(threading.Thread):
         self.channel = channel
         self.exchange_baby_monitor = exchange_baby_monitor
         self.routing_key_smartphone = routing_key_smartphone
+        self.queue_babymonitor = queue_babymonitor
+        self.is_consumer = False
+        self.is_producer = False
         
         threading.Thread.__init__(self)
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(host='localhost'))
         self.channel = self.connection.channel()
+
         self.bm = self.create_table_baby_monitor()
         self.button_is_pressed = False
 
     def run(self):
-        while self.button_is_pressed:
-            data_from_baby(self)
+        def callback(ch, method, properties, body):
+            print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
 
-            line = self.get_data_baby_monitor()
+        if self.is_consumer:  
+            self.channel.queue_bind(
+            exchange=exchange_baby_monitor, queue=self.queue_babymonitor, routing_key=routing_key_babymonitor)
 
-            keys = ('id', 'breathing', 'time_no_breathing', 'crying', 'sleeping')
+            self.channel.basic_consume(
+                queue=self.queue_babymonitor, on_message_callback=callback, auto_ack=False)
 
-            message = str(dict(zip(keys, line)))
-            self.channel.basic_publish(exchange=self.exchange_baby_monitor, routing_key=self.routing_key_smartphone, body=message)
+            self.channel.start_consuming()
+        
+        if self.is_producer:
+            while self.button_is_pressed:
+                data_from_baby(self)
 
-            print(" [x] Sent Topic: %r | Message: %r" % (self.routing_key_smartphone, message))
-            sleep(2)
+                line = self.get_data_baby_monitor()
+
+                keys = ('id', 'breathing', 'time_no_breathing', 'crying', 'sleeping')
+                data = dict(zip(keys, line))
+                message = str(data)
+                if data['time_no_breathing'] > 5 or not data['crying']:
+                    message = 'NOTIFICATION: ' + message
+
+                else: 
+                    message = 'STATUS: ' + message 
+
+                self.channel.basic_publish(exchange=self.exchange_baby_monitor, routing_key=self.routing_key_smartphone, body=message)
+
+                print(" [x] Sent Topic: %r | Message: %r" % (self.routing_key_smartphone, message))
+                sleep(2)
+
+
         
         print('Closing connection...')
         self.connection.close()
