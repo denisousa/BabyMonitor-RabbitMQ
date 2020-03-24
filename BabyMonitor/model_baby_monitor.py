@@ -45,11 +45,10 @@ class Baby_Monitor(threading.Thread):
                 data_from_baby(self, 0)
 
                 line = self.get_data_baby_monitor()
-                print('LINE: ', line)
                 keys = ('id', 'breathing', 'time_no_breathing', 'crying', 'sleeping')
                 data = dict(zip(keys, line))
                 message = str(data)
-                if data['time_no_breathing'] > 5 or data['crying']:
+                if self.check_if_notification(data):
                     message = 'NOTIFICATION: ' + message
                 else: 
                     message = 'STATUS: ' + message 
@@ -61,6 +60,9 @@ class Baby_Monitor(threading.Thread):
         
         print('Closing connection...')
         self.connection.close()
+
+    def check_if_notification(self, data):
+        return True if data['time_no_breathing'] > 5 or data['crying'] else False
 
     def create_table_baby_monitor(self):
         try:

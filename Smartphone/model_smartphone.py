@@ -25,7 +25,6 @@ class Smartphone(threading.Thread):
 		self.is_consumer = False
 
 		self.button_is_pressed = False
-
 		self.is_notification = False
 
 	def run(self):
@@ -46,11 +45,10 @@ class Smartphone(threading.Thread):
 
 		if self.is_producer and self.button_is_pressed:
 			message = 'CONFIRMATION: Notification received!'
-			self.channel.basic_publish(exchange = exchange_baby_monitor, routing_key=routing_key_baby_monitor, body = message)
+			self.channel.basic_publish(exchange=exchange_baby_monitor, routing_key=routing_key_baby_monitor, body=message)
 			self.is_notification = False
-
 			print(" [x] Sent Topic: %r | Message: %r" % (routing_key_baby_monitor, message))
-
+			button_is_pressed = False
 
 	def read_message(self, message):
 		message = str(message)

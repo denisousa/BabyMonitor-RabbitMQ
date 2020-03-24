@@ -30,7 +30,7 @@ class Window(QMainWindow):
         self.connection.setText('<strong>Open connection<\strong>')
         self.connection.setFont(QtGui.QFont('Arial', 14))
         self.connection.adjustSize()
-        self.connection.move(60, 350)
+        self.connection.move(60, 420)
     
     def button_pressed_stop(self):
         self.button = False
@@ -42,27 +42,19 @@ class Window(QMainWindow):
         self.connection.move(60, 350)
 
     def button_pressed_confirm(self):
-        thread_status = threading.Thread(target=self.confirm, args=())
-        thread_status.start()
-        self.button_confirm.setEnabled(False)
+        confirm_notification()
+        data = get_data()
+        self.message_confirm.setText("Notification Confirmed")
+        self.message_confirm.setFont(QtGui.QFont('Arial', 12))
+        self.message_confirm.adjustSize()
+        self.message_confirm.move(60, 260) 
 
     def thread_func(self):
         while True:
             if self.start_thread: 
                 self.show_message_data()
-                '''if smartphone_consumer.is_notification:
-                    self.button_confirm.setEnabled(True)
-				else:
-					self.button_confirm.setEnabled(False)'''
 
-    def show_message_notification(self):
-        self.alert.setText("Notification Confirmed")
-        self.alert.setFont(QtGui.QFont('Arial', 12))
-        self.alert.adjustSize()
-        self.alert.move(60, 260)
-        confirm_notification()
-
-    def show_message_data(self):    
+    def show_message_data(self):
         data = get_data()
         self.send_breathing.setText('Breathing: {}'.format(data['breathing']))
         self.send_breathing.setFont(QtGui.QFont('Arial', 12)) 
@@ -84,17 +76,29 @@ class Window(QMainWindow):
         self.send_sleeping.adjustSize() 
         self.send_sleeping.move(60, 190)
 
-        if smartphone_consumer.is_notification: 
+        if data['time_no_breathing'] > 5:
+            txt = "ALERT: Baby Emma isn't breathing"
+            self.alert.setText(txt)
+            self.alert.setFont(QtGui.QFont('Arial', 12))
+            self.alert.adjustSize()
+            self.alert.move(60, 350)
+            self.button_confirm.setEnabled(True)
+        elif data['crying']:
+            txt = 'ALERT: Baby Emma is crying!'
+            self.alert.setText(txt)
+            self.alert.setFont(QtGui.QFont('Arial', 12))
+            self.alert.adjustSize()
+            self.alert.move(60, 350)
+            self.button_confirm.setEnabled(True)
+        else:
             txt = ''
-            if data['crying']:
-                txt = 'ALERT: Baby Emma is crying!'
-            elif not data['breathing']:
-                txt = "ALERT: Baby Emma isn't breathing"
+            self.alert.setText(txt)
+            self.alert.setFont(QtGui.QFont('Arial', 12))
+            self.alert.adjustSize()
+            self.alert.move(60, 350)
+            self.button_confirm.setEnabled(False)
+            self.message_confirm.setText("")
 
-            self.send_sleeping.setText(txt)
-            self.send_sleeping.setFont(QtGui.QFont('Arial', 12))
-            self.send_sleeping.adjustSize()
-            self.send_sleeping.move(60, 220)
 
     def InitWindow(self):
         # Define image
@@ -109,11 +113,23 @@ class Window(QMainWindow):
         self.titleDevice.adjustSize()
         self.titleDevice.move(60, 50)
 
+        self.receive = QLabel(self)
+        self.receive.setText('<strong>Receive<\strong>')
+        self.receive.setFont(QtGui.QFont('Arial', 14))
+        self.receive.adjustSize()
+        self.receive.move(60, 100)
+
         self.send = QLabel(self)
-        self.send.setText('<strong>Receive<\strong>')
+        self.send.setText('<strong>Send<\strong>')
         self.send.setFont(QtGui.QFont('Arial', 14))
         self.send.adjustSize()
-        self.send.move(60, 100)
+        self.send.move(60, 230)
+
+        self.information = QLabel(self)
+        self.information.setText('<strong>Information<\strong>')
+        self.information.setFont(QtGui.QFont('Arial', 14))
+        self.information.adjustSize()
+        self.information.move(60, 320)
 
         self.connection = QLabel(self)
         self.send_breathing = QLabel(self)
@@ -121,12 +137,7 @@ class Window(QMainWindow):
         self.send_crying = QLabel(self)
         self.send_sleeping = QLabel(self)
         self.alert = QLabel(self)
-
-        self.send = QLabel(self)
-        self.send.setText('<strong>Send<\strong>')
-        self.send.setFont(QtGui.QFont('Arial', 14))
-        self.send.adjustSize()
-        self.send.move(60, 230)
+        self.message_confirm = QLabel(self)
 
         self.setWindowIcon(QtGui.QIcon('smartphone.png'))
         self.setWindowTitle(self.title)

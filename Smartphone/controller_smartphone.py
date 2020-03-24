@@ -4,8 +4,6 @@ import sys
 sys.path.append('../')
 from model_smartphone import Smartphone
 
-
-smartphone_producer = Smartphone()
 smartphone_consumer = Smartphone()
 
 #start conection
@@ -15,9 +13,6 @@ def start():
 	smartphone_consumer.is_consumer = True
 	smartphone_consumer.button_is_pressed = True
 	smartphone_consumer.start()
-
-	smartphone_producer.is_producer = True
-	smartphone_producer.start()
 	
 #stop conection
 def stop():
@@ -31,8 +26,12 @@ def get_data():
 	return smartphone_consumer.get_data_baby_monitor()
 
 def confirm_notification():
-	global smartphone_producer, smartphone_consumer
+	global smartphone_producer
 
-	if smartphone_consumer.is_notification:
+	smartphone_producer = Smartphone()
+	smartphone_producer.button_is_pressed = True
+	smartphone_producer.is_producer = True
+	smartphone_producer.start()
+	'''if smartphone_consumer.is_notification:
 		smartphone_consumer.is_notification = False
-		smartphone_producer.button_is_pressed = True
+		smartphone_producer.button_is_pressed = True'''
