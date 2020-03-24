@@ -11,6 +11,9 @@ breathing = True
 time_no_breathing = 0
 max_no_changes = random.randint(5,15)
 
+#flag = -1: bebê está bem
+#flag = 0: status novo
+#flag = 1: status sem alteração
 
 def count(function):
     
@@ -20,24 +23,26 @@ def count(function):
 
         if flag == -1: 
             wrapped.calls = 0
-            max_no_changes = random.randint(3, 5)
-            return(flag, monitor)
+            max_no_changes = random.randint(3, 10)
+            return(-1, monitor)
 
-
-        if wrapped.calls < max_no_changes:
-            wrapped.calls += 1
-            if wrapped.calls == 1:  
+        if flag == 0: 
+            if wrapped.calls < max_no_changes:
+                wrapped.calls += 1
+                if wrapped.calls == 1:  
+                    return function(0, monitor)
+                return function(1, monitor)
+            else:        
+                wrapped.calls = 0 
+                max_no_changes = random.randint(3,10)
                 return function(0, monitor)
-            elif breathing:
-                return 1 
-            else: 
-                return function(wrapped.calls, monitor)
-
-        else:        
-            wrapped.calls = 0 
-            max_no_changes = random.randint(3,5)
-            return function(0, monitor)
     
+        if flag == 1: 
+            wrapped.calls += 1
+            if not breathing:
+                return function(wrapped.calls, monitor)
+            return function(1, monitor)
+
     wrapped.calls = 0
     return wrapped
 
@@ -54,8 +59,6 @@ def data_from_baby(flag, monitor):
         time_no_breathing = 0
         data = {'breathing': breathing, 'time_no_breathing': time_no_breathing, 'crying': crying, 'sleeping': sleeping}
 
-        print("Reseta dados ", data)
-
     elif flag == 0:   
         crying = random.choices([True, False], [0.25,0.75], k=1)[0]
 
@@ -71,23 +74,21 @@ def data_from_baby(flag, monitor):
             if not breathing: 
                 time_no_breathing = 1
 
-            if sleeping:
-                crying = False
-
             else: 
                 time_no_breathing = 0
             
+            if sleeping:
+                crying = False
+
         data = {'breathing': breathing, 'time_no_breathing': time_no_breathing, 'crying': crying, 'sleeping': sleeping}
-        
-        print("Gera novos dados ", data)
 
     else: 
         line = monitor.get_data_baby_monitor()
         keys = ('id', 'breathing', 'time_no_breathing', 'crying', 'sleeping')
         data = dict(zip(keys, line))
-        data['time_no_breathing'] += 1
+        if not data['breathing']:
+            data['time_no_breathing'] = flag
         data.pop('id')
-        print('Altera respiração ', data)
 
     monitor.insert_baby_monitor(data)
     

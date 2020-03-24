@@ -76,20 +76,23 @@ class Window(QMainWindow):
         self.send_sleeping.adjustSize() 
         self.send_sleeping.move(60, 190)
 
-        if data['time_no_breathing'] > 5:
-            txt = "ALERT: Baby Emma isn't breathing"
-            self.alert.setText(txt)
-            self.alert.setFont(QtGui.QFont('Arial', 12))
-            self.alert.adjustSize()
-            self.alert.move(60, 350)
-            self.button_confirm.setEnabled(True)
-        elif data['crying']:
-            txt = 'ALERT: Baby Emma is crying!'
-            self.alert.setText(txt)
-            self.alert.setFont(QtGui.QFont('Arial', 12))
-            self.alert.adjustSize()
-            self.alert.move(60, 350)
-            self.button_confirm.setEnabled(True)
+        if smartphone_consumer.is_notification:
+            
+            if not data['breathing']:
+                txt = "ALERT: Baby Emma isn't breathing!"
+                self.alert.setText(txt)
+                self.alert.setFont(QtGui.QFont('Arial', 12))
+                self.alert.adjustSize()
+                self.alert.move(60, 350)
+                self.button_confirm.setEnabled(True)
+            
+            elif data['crying']:
+                txt = 'ALERT: Baby Emma is crying!'
+                self.alert.setText(txt)
+                self.alert.setFont(QtGui.QFont('Arial', 12))
+                self.alert.adjustSize()
+                self.alert.move(60, 350)
+                self.button_confirm.setEnabled(True)
         else:
             txt = ''
             self.alert.setText(txt)

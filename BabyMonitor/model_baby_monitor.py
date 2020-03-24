@@ -8,6 +8,8 @@ from construct_scenario import *
 import sqlalchemy as db
 import threading
 
+semaphore = threading.Semaphore()
+notif_confirm = [False, False]
 
 class Baby_Monitor(threading.Thread):
     def __init__(self):
@@ -26,6 +28,7 @@ class Baby_Monitor(threading.Thread):
         self.button_is_pressed = False
 
     def run(self):
+        global semaphore, notif_confirm
 
         if self.is_consumer:  
             self.channel.queue_bind(
@@ -33,7 +36,9 @@ class Baby_Monitor(threading.Thread):
         
             def callback(ch, method, properties, body):
                 print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
-                data_from_baby(self, -1)
+                semaphore.acquire()
+                notif_confirm[1] = True
+                semaphore.release()
 
             self.channel.basic_consume(
                 queue= queue_baby_monitor, on_message_callback=callback, auto_ack=True)
@@ -42,14 +47,28 @@ class Baby_Monitor(threading.Thread):
         
         if self.is_producer:
             while self.button_is_pressed:
-                data_from_baby(self, 0)
+                if notif_confirm[0]:
+                    if notif_confirm[1]:
+                        data_from_baby(self, -1)
+                        semaphore.acquire()
+                        notif_confirm[0] = False
+                        notif_confirm[1] = False
+                        semaphore.release()
+                    else: 
+                        data_from_baby(self, 1)
+                else: 
+                    data_from_baby(self, 0)
 
                 line = self.get_data_baby_monitor()
                 keys = ('id', 'breathing', 'time_no_breathing', 'crying', 'sleeping')
                 data = dict(zip(keys, line))
                 message = str(data)
-                if self.check_if_notification(data):
+                if data['crying'] or data['time_no_breathing'] >= 5:
                     message = 'NOTIFICATION: ' + message
+                    semaphore.acquire()
+                    notif_confirm[0] = True
+                    semaphore.release()
+
                 else: 
                     message = 'STATUS: ' + message 
 
@@ -60,9 +79,6 @@ class Baby_Monitor(threading.Thread):
         
         print('Closing connection...')
         self.connection.close()
-
-    def check_if_notification(self, data):
-        return True if data['time_no_breathing'] > 5 or data['crying'] else False
 
     def create_table_baby_monitor(self):
         try:
