@@ -4,46 +4,42 @@ import random
 sys.path.append('../')
 from construct_scenario import queue_smart_tv, routing_key_smart_tv, exchange_baby_monitor
 from sqlalchemy import Table, Column, String, Integer
+import threading
 
-class Smart_TV():
 
-    def __init__(self, connection, channel):
-        
-        self.connection = connection
-        self.channel = channel
+class Smart_TV(threading.Thread):
+
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        self.channel = self.connection.channel()
+        self.channel.queue_bind(
+            exchange=exchange_baby_monitor, queue=queue_smart_tv, routing_key=routing_key_smart_tv)
 
         self.status = True
-        self.application = False    
+        self.application = False
+        self.application_thread = threading.Thread(target=self.aplication_func, args=())
+        self.button_is_pressed = False
 
-    def start_connection(self):
-        
-        print(' [*] Smart Tv waiting for messages. To exit press CTRL+C')
+    def run(self):
+        while self.button_is_pressed:
+            print(' [*] Smart Tv waiting for messages. To exit press CTRL+C')
 
-        def callback(ch, method, properties, body):
             if self.status:
-                print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
+                print('TV is unlocked.')
+
             else:
-                self.channel.basic_publish(exchange=exchange_baby_monitor, routing_key=routing_key_smart_tv, body="Unable to show notification.")
+                print('TV is locked')
 
-        self.channel.basic_consume(
-            queue=queue_smart_tv, on_message_callback=callback, auto_ack=True)
+            def callback(ch, method, properties, body):
+                if self.status:
+                    print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
+            
+            self.channel.basic_consume(
+                queue=queue_smart_tv, on_message_callback=callback, auto_ack=True)
 
-        self.channel.start_consuming()
+            self.channel.start_consuming()
 
-
-    def create_table_smart_tv(engine, meta):
-        smart_tv_table = Table(
-            "smart_tv",
-            meta,
-            Column("id", Integer, primary_key=True, autoincrement=True),
-            Column("command", String),
-        )
-        meta.create_all(engine)
-
-        return smart_tv_table
-
-
-    def insert_smart_tv(smart_tv, engine):
-        conn = engine.connect()
-        new_data = smart_tv.insert().values(command="Receive command from Smartphone")
-        conn.execute(new_data)
+    def aplication_func(self):
+        while self.application:
+            self.status = False

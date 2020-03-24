@@ -2,7 +2,7 @@
 import pika
 import sys
 sys.path.append('../')
-from model_baby_monitor import Baby_Monitor
+from model_baby_monitor import Baby_Monitor, notif_confirm
 
 monitor_producer = Baby_Monitor()
 monitor_consumer = Baby_Monitor()
@@ -29,3 +29,12 @@ def get_data():
     global monitor_producer
 
     return monitor_producer.get_data_baby_monitor()
+
+def get_confirmation():
+    if notif_confirm[0]:
+        if notif_confirm[1]:
+            return 'Confirmation received.'
+        else:
+            return 'Pending notification.'
+    else:
+        return ''

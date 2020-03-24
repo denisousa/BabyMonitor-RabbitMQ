@@ -4,21 +4,32 @@ import sys
 import random
 sys.path.append('../')
 from construct_scenario import queue_smart_tv, routing_key_smart_tv, exchange_baby_monitor
-import model_smart_tv
+from model_smart_tv import Smart_TV
+import threading
+
+smart_tv = Smart_TV()
 
 
-def turn_on():
-    #Connection with RabbitMQ (Broker)
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(host='localhost'))
-    channel = connection.channel()
-    channel.queue_bind(
-            exchange=exchange_baby_monitor, queue=queue_smart_tv, routing_key=routing_key_smart_tv)
-    
-    tv = Smart_TV(connection, channel)
-    tv.start_connection()
+def turn_on():    
+    global smart_tv
+    smart_tv.button_is_pressed = True
+    smart_tv.start()
 
-#ver uma forma de setar essas coisas
+def turn_off():
+    global smart_tv
+
+    smart_tv.button_is_pressed = False
+
 def start_app():
-    application = True
-    status = False
+    global smart_tv
+
+    smart_tv.application = True
+    smart_tv.application_thread.start()
+
+def stop_app():
+    global smart_tv
+
+    smart_tv.application = False
+    #smart_tv.application_thread = threading.Thread(target=self.aplication_func, args=())
+    smart_tv.status = True
+    

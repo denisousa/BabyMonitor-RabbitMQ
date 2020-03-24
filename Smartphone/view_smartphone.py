@@ -44,6 +44,9 @@ class Window(QMainWindow):
     def button_pressed_confirm(self):
         confirm_notification()
         data = get_data()
+        self.button_confirm.setEnabled(False)
+        self.alert.setText("")
+        smartphone_consumer.is_notification = False
         self.message_confirm.setText("Notification Confirmed")
         self.message_confirm.setFont(QtGui.QFont('Arial', 12))
         self.message_confirm.adjustSize()
@@ -77,7 +80,6 @@ class Window(QMainWindow):
         self.send_sleeping.move(60, 190)
 
         if smartphone_consumer.is_notification:
-            
             if not data['breathing']:
                 txt = "ALERT: Baby Emma isn't breathing!"
                 self.alert.setText(txt)
@@ -101,7 +103,6 @@ class Window(QMainWindow):
             self.alert.move(60, 350)
             self.button_confirm.setEnabled(False)
             self.message_confirm.setText("")
-
 
     def InitWindow(self):
         # Define image

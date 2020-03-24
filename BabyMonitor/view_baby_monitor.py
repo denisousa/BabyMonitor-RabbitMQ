@@ -4,7 +4,6 @@ from PyQt5 import QtGui
 from controller_baby_monitor import *
 import sys
 import threading
-from time import sleep
 sys.path.append('../')
 
 
@@ -65,6 +64,19 @@ class Window(QMainWindow):
                 self.send_sleeping.adjustSize() 
                 self.send_sleeping.move(60, 190)
 
+                if 'Pending' in get_confirmation():
+                    self.pending.setText(get_confirmation())
+                    self.pending.setFont(QtGui.QFont('Arial', 12)) 
+                    self.pending.adjustSize() 
+                    self.pending.move(60, 260)
+                    self.message_from_smartphone.setText("")
+                else:
+                    self.message_from_smartphone.setText(get_confirmation())
+                    self.message_from_smartphone.setFont(QtGui.QFont('Arial', 12)) 
+                    self.message_from_smartphone.adjustSize() 
+                    self.message_from_smartphone.move(60, 380)
+                    self.pending.setText("")
+
 
     def InitWindow(self):
         # Define image
@@ -85,11 +97,25 @@ class Window(QMainWindow):
         self.send.adjustSize()
         self.send.move(60, 100)
 
+        self.receive = QLabel(self)
+        self.receive.setText('<strong>Receive<\strong>')
+        self.receive.setFont(QtGui.QFont('Arial', 14))
+        self.receive.adjustSize()
+        self.receive.move(60, 230)
+
+        self.information = QLabel(self)
+        self.information.setText('<strong>Information<\strong>')
+        self.information.setFont(QtGui.QFont('Arial', 14))
+        self.information.adjustSize()
+        self.information.move(60, 320)
+
         self.connection = QLabel(self)
         self.send_breathing = QLabel(self)
         self.send_time_no_breathing = QLabel(self)
         self.send_crying = QLabel(self)
         self.send_sleeping = QLabel(self)
+        self.message_from_smartphone = QLabel(self)
+        self.pending = QLabel(self)
         
         self.button = QPushButton('Start', self)
         self.button.move(540, 600)

@@ -13,7 +13,7 @@ max_no_changes = random.randint(5,15)
 
 #flag = -1: bebê está bem
 #flag = 0: status novo
-#flag = 1: status sem alteração
+#flag >= 1: status sem alteração
 
 def count(function):
     
@@ -22,9 +22,9 @@ def count(function):
         global max_no_changes, breathing
 
         if flag == -1: 
-            wrapped.calls = 0
+            wrapped.calls = 1
             max_no_changes = random.randint(3, 10)
-            return(-1, monitor)
+            return function(-1, monitor)
 
         if flag == 0: 
             if wrapped.calls < max_no_changes:
@@ -33,7 +33,7 @@ def count(function):
                     return function(0, monitor)
                 return function(1, monitor)
             else:        
-                wrapped.calls = 0 
+                wrapped.calls = 1
                 max_no_changes = random.randint(3,10)
                 return function(0, monitor)
     
@@ -87,7 +87,7 @@ def data_from_baby(flag, monitor):
         keys = ('id', 'breathing', 'time_no_breathing', 'crying', 'sleeping')
         data = dict(zip(keys, line))
         if not data['breathing']:
-            data['time_no_breathing'] = flag
+            data['time_no_breathing'] += 1
         data.pop('id')
 
     monitor.insert_baby_monitor(data)
