@@ -3,7 +3,7 @@ from time import sleep
 import sys
 from generate_data import *
 sys.path.append('../')
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, Boolean
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, Boolean, String
 from construct_scenario import *
 import sqlalchemy as db
 import threading
@@ -33,7 +33,7 @@ class Baby_Monitor(threading.Thread):
         
             def callback(ch, method, properties, body):
                 print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
-                data_from_baby(self)
+                data_from_baby(self, -1)
 
             self.channel.basic_consume(
                 queue= queue_baby_monitor, on_message_callback=callback, auto_ack=True)
@@ -42,16 +42,15 @@ class Baby_Monitor(threading.Thread):
         
         if self.is_producer:
             while self.button_is_pressed:
-                data_from_baby(self)
+                data_from_baby(self, 0)
 
                 line = self.get_data_baby_monitor()
-
+                print('LINE: ', line)
                 keys = ('id', 'breathing', 'time_no_breathing', 'crying', 'sleeping')
                 data = dict(zip(keys, line))
                 message = str(data)
-                if data['time_no_breathing'] > 5 or not data['crying']:
+                if data['time_no_breathing'] > 5 or data['crying']:
                     message = 'NOTIFICATION: ' + message
-
                 else: 
                     message = 'STATUS: ' + message 
 
@@ -83,14 +82,21 @@ class Baby_Monitor(threading.Thread):
             return bm
 
     def insert_baby_monitor(self, data):
-        conn = self.engine.connect()
-        query = self.bm.insert()
-        conn.execute(query, data)
+        try:
+            conn = self.engine.connect()
+            query = self.bm.insert()
+            conn.execute(query, data)
+            print('Success')
+        except:
+            conn = self.engine.connect()
+            conn.rollback()
+            print('Failed')
 
     def get_data_baby_monitor(self):
         conn = self.engine.connect()
         query = db.select([self.bm])
         result = conn.execute(query).fetchall()
+
         if result: 
             return result[-1]
         else: 

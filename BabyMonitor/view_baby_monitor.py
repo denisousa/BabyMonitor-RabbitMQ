@@ -66,7 +66,6 @@ class Window(QMainWindow):
                 self.send_sleeping.move(60, 190)
 
 
-
     def InitWindow(self):
         # Define image
         self.label = QLabel(self)

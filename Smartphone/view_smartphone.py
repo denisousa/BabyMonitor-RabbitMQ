@@ -5,6 +5,8 @@ from controller_smartphone import *
 import sys
 import threading
 sys.path.append('../')
+import faulthandler; faulthandler.enable()
+
 
 class Window(QMainWindow):
     def __init__(self):
@@ -20,7 +22,7 @@ class Window(QMainWindow):
         self.start_thread = False
 
     def button_pressed_start(self):
-        thread_status = threading.Thread(target=self.show_message, args=())
+        thread_status = threading.Thread(target=self.thread_func, args=())
         thread_status.start()
         self.button = True
         self.start_thread = True
@@ -39,41 +41,60 @@ class Window(QMainWindow):
         self.connection.adjustSize()
         self.connection.move(60, 350)
 
-    def show_message(self):
+    def button_pressed_confirm(self):
+        thread_status = threading.Thread(target=self.confirm, args=())
+        thread_status.start()
+        self.button_confirm.setEnabled(False)
+
+    def thread_func(self):
         while True:
             if self.start_thread: 
-                data = smartphone.get_data_baby_monitor()
-                self.send_breathing.setText('Breathing: {}'.format(data['breathing']))
-                self.send_breathing.setFont(QtGui.QFont('Arial', 12)) 
-                self.send_breathing.adjustSize()
-                self.send_breathing.move(60, 130)
+                self.show_message_data()
+                '''if smartphone_consumer.is_notification:
+                    self.button_confirm.setEnabled(True)
+				else:
+					self.button_confirm.setEnabled(False)'''
 
-                self.send_time_no_breathing.setText('Time no Breathing: {}'.format(data['time_no_breathing']))
-                self.send_time_no_breathing.setFont(QtGui.QFont('Arial', 12)) 
-                self.send_time_no_breathing.adjustSize() 
-                self.send_time_no_breathing.move(60, 150)
+    def show_message_notification(self):
+        self.alert.setText("Notification Confirmed")
+        self.alert.setFont(QtGui.QFont('Arial', 12))
+        self.alert.adjustSize()
+        self.alert.move(60, 260)
+        confirm_notification()
 
-                self.send_crying.setText('Crying: {}'.format(data['crying']))
-                self.send_crying.setFont(QtGui.QFont('Arial', 12)) 
-                self.send_crying.adjustSize() 
-                self.send_crying.move(60, 170)
+    def show_message_data(self):    
+        data = get_data()
+        self.send_breathing.setText('Breathing: {}'.format(data['breathing']))
+        self.send_breathing.setFont(QtGui.QFont('Arial', 12)) 
+        self.send_breathing.adjustSize()
+        self.send_breathing.move(60, 130)
 
-                self.send_sleeping.setText('Sleeping: {}'.format(data['sleeping']))
-                self.send_sleeping.setFont(QtGui.QFont('Arial', 12)) 
-                self.send_sleeping.adjustSize() 
-                self.send_sleeping.move(60, 190)
+        self.send_time_no_breathing.setText('Time no Breathing: {}'.format(data['time_no_breathing']))
+        self.send_time_no_breathing.setFont(QtGui.QFont('Arial', 12)) 
+        self.send_time_no_breathing.adjustSize() 
+        self.send_time_no_breathing.move(60, 150)
 
-                if data['time_no_breathing'] > 3:
-                    self.alert.setText("Alert: ALERT! Emma isn't breathing")
-                    self.alert.setFont(QtGui.QFont('Arial', 12))
-                    self.alert.adjustSize()
-                    self.alert.move(60, 260)
-                    smartphone.confirm_notification()
-                else:
-                    self.alert.setText('')
-                    self.alert.setFont(QtGui.QFont('Arial', 12))
-                    self.alert.adjustSize()
-                    self.alert.move(60, 260)
+        self.send_crying.setText('Crying: {}'.format(data['crying']))
+        self.send_crying.setFont(QtGui.QFont('Arial', 12)) 
+        self.send_crying.adjustSize() 
+        self.send_crying.move(60, 170)
+
+        self.send_sleeping.setText('Sleeping: {}'.format(data['sleeping']))
+        self.send_sleeping.setFont(QtGui.QFont('Arial', 12)) 
+        self.send_sleeping.adjustSize() 
+        self.send_sleeping.move(60, 190)
+
+        if smartphone_consumer.is_notification: 
+            txt = ''
+            if data['crying']:
+                txt = 'ALERT: Baby Emma is crying!'
+            elif not data['breathing']:
+                txt = "ALERT: Baby Emma isn't breathing"
+
+            self.send_sleeping.setText(txt)
+            self.send_sleeping.setFont(QtGui.QFont('Arial', 12))
+            self.send_sleeping.adjustSize()
+            self.send_sleeping.move(60, 220)
 
     def InitWindow(self):
         # Define image
@@ -119,10 +140,13 @@ class Window(QMainWindow):
         self.button.move(620, 600)
         self.button.clicked.connect(self.button_pressed_stop)
 
-        self.button = QPushButton('Confirm', self)
-        self.button.move(740, 600)
-        self.button.clicked.connect(self.button_pressed_stop)
+        self.button_confirm = QPushButton('Confirm', self)
+        self.button_confirm.setEnabled(False)
+        self.button_confirm.move(740, 600)
+        self.button_confirm.clicked.connect(self.button_pressed_confirm)
+
         self.show()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
