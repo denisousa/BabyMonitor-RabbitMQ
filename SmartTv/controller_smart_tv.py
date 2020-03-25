@@ -33,3 +33,7 @@ def stop_app():
     #smart_tv.application_thread = threading.Thread(target=self.aplication_func, args=())
     smart_tv.status = True
     
+def get_status():
+    global smart_tv
+
+    return smart_tv.status

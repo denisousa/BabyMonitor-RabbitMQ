@@ -20,30 +20,24 @@ class BabyMonitorConsumer(threading.Thread):
             pika.ConnectionParameters(host='localhost'))
         self.channel = self.connection.channel()
         self.bm = self.create_table_baby_monitor()
-        self.button_is_pressed = False
-        declare_exchanges_queues(self.channel)
 
     def run(self):
+        print('HEAR CONSUMER')
         global semaphore, notif_confirm
-        while self.button_is_pressed:
-            print(' [*] BabyMonitor waiting for messages. To exit press CTRL+C')
 
-            def callback_baby_monitor(ch, method, properties, body):
-                if method.routing_key == routing_key_baby_monitor:
-                    print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
-                    semaphore.acquire()
-                    notif_confirm[1] = True
-                    semaphore.release()
+        self.channel.queue_bind(
+        exchange=exchange_baby_monitor, queue = queue_baby_monitor, routing_key=routing_key_baby_monitor)
+    
+        def callback(ch, method, properties, body):
+            print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
+            semaphore.acquire()
+            notif_confirm[1] = True
+            semaphore.release()
 
-            self.channel.queue_bind(
-                exchange=exchange_baby_monitor, queue=queue_baby_monitor, routing_key=routing_key_baby_monitor)
-        
-            self.channel.basic_consume(
-                queue=queue_baby_monitor, on_message_callback=callback_baby_monitor, auto_ack=True)
+        self.channel.basic_consume(
+            queue= queue_baby_monitor, on_message_callback=callback, auto_ack=True)
 
-            self.channel.start_consuming()
-        
-        self.connection.close()
+        self.channel.start_consuming()
 
     def create_table_baby_monitor(self):
         try:
@@ -96,12 +90,12 @@ class BabyMonitorProducer(threading.Thread):
         self.channel = self.connection.channel()
         self.bm = self.create_table_baby_monitor()
         self.button_is_pressed = False
-        declare_exchanges_queues(self.channel)
 
     def run(self):
         global semaphore, notif_confirm
 
-        while self.button_is_pressed:
+        while True:
+            print('HEAR PRODUCER')
             if notif_confirm[0]:
                 if notif_confirm[1]:
                     data_from_baby(self, -1)
@@ -156,9 +150,11 @@ class BabyMonitorProducer(threading.Thread):
             conn = self.engine.connect()
             query = self.bm.insert()
             conn.execute(query, data)
+            print('Success')
         except:
             conn = self.engine.connect()
             conn.rollback()
+            print('Failed')
 
     def get_data_baby_monitor(self):
         conn = self.engine.connect()

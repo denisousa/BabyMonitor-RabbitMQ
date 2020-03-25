@@ -20,6 +20,7 @@ class Smart_TV(threading.Thread):
         self.application = False
         self.application_thread = threading.Thread(target=self.aplication_func, args=())
         self.button_is_pressed = False
+        #declare_exchanges_queues(self.channel)
 
     def run(self):
         while self.button_is_pressed:
@@ -31,12 +32,13 @@ class Smart_TV(threading.Thread):
             else:
                 print('TV is locked')
 
-            def callback(ch, method, properties, body):
+            def callback_smart_tv(ch, method, properties, body):
                 if self.status:
-                    print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
+                    if 'tv' in method.routing_key:
+                        print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
             
             self.channel.basic_consume(
-                queue=queue_smart_tv, on_message_callback=callback, auto_ack=True)
+                queue=queue_smart_tv, on_message_callback=callback_smart_tv, auto_ack=True)
 
             self.channel.start_consuming()
 

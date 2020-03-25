@@ -10,39 +10,66 @@ import threading
 
 semaphore = threading.Semaphore()
 notif_confirm = [False, False]
+consumer = None
 
-class BabyMonitorConsumer(threading.Thread):
+class Baby_Monitor(threading.Thread):
     def __init__(self):
-        threading.Thread.__init__(self)
         self.engine = engine
         self.meta = meta
+        self.channel = channel
+        
+        threading.Thread.__init__(self)
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(host='localhost'))
         self.channel = self.connection.channel()
+
         self.bm = self.create_table_baby_monitor()
         self.button_is_pressed = False
-        declare_exchanges_queues(self.channel)
 
     def run(self):
         global semaphore, notif_confirm
+        
+        
         while self.button_is_pressed:
-            print(' [*] BabyMonitor waiting for messages. To exit press CTRL+C')
-
-            def callback_baby_monitor(ch, method, properties, body):
-                if method.routing_key == routing_key_baby_monitor:
-                    print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
+            if notif_confirm[0]:
+                if notif_confirm[1]:
+                    data_from_baby(self, -1)
                     semaphore.acquire()
-                    notif_confirm[1] = True
+                    notif_confirm[0] = False
+                    notif_confirm[1] = False
                     semaphore.release()
+                else: 
+                    data_from_baby(self, 1)
+            else: 
+                data_from_baby(self, 0)
 
-            self.channel.queue_bind(
-                exchange=exchange_baby_monitor, queue=queue_baby_monitor, routing_key=routing_key_baby_monitor)
-        
-            self.channel.basic_consume(
-                queue=queue_baby_monitor, on_message_callback=callback_baby_monitor, auto_ack=True)
+            line = self.get_data_baby_monitor()
+            keys = ('id', 'breathing', 'time_no_breathing', 'crying', 'sleeping')
+            data = dict(zip(keys, line))
+            message = str(data)
+            if data['crying'] or data['time_no_breathing'] >= 5:
+                global consumer
 
-            self.channel.start_consuming()
+                message = 'NOTIFICATION: ' + message
+                semaphore.acquire()
+                notif_confirm[0] = True
+                notif_confirm[1] = False
+                semaphore.release()
+
+                consumer = threading.Thread(target=watch_confirmation, args=(self, ))
+                consumer.start()
+
+            else: 
+                message = 'STATUS: ' + message 
+
+
+            self.channel.basic_publish(exchange=exchange_baby_monitor, routing_key=routing_key_smartphone, body=message)
+
+            print(" [x] Sent Topic: %r | Message: %r" % (routing_key_smartphone, message))
+            
+            sleep(2)
         
+        print('Closing connection...')
         self.connection.close()
 
     def create_table_baby_monitor(self):
@@ -69,7 +96,6 @@ class BabyMonitorConsumer(threading.Thread):
             conn = self.engine.connect()
             query = self.bm.insert()
             conn.execute(query, data)
-            print('Success')
         except:
             conn = self.engine.connect()
             conn.rollback()
@@ -83,89 +109,23 @@ class BabyMonitorConsumer(threading.Thread):
         if result: 
             return result[-1]
         else: 
-            return 0 
+            return 0
 
 
-class BabyMonitorProducer(threading.Thread):
-    def __init__(self):
-        threading.Thread.__init__(self)
-        self.engine = engine
-        self.meta = meta
-        self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host='localhost'))
-        self.channel = self.connection.channel()
-        self.bm = self.create_table_baby_monitor()
-        self.button_is_pressed = False
-        declare_exchanges_queues(self.channel)
+def watch_confirmation(monitor):
+    global notif_confirm, semaphore
 
-    def run(self):
-        global semaphore, notif_confirm
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    channel.queue_bind(
+    exchange=exchange_baby_monitor, queue=queue_baby_monitor, routing_key=routing_key_baby_monitor)
 
-        while self.button_is_pressed:
-            if notif_confirm[0]:
-                if notif_confirm[1]:
-                    data_from_baby(self, -1)
-                    semaphore.acquire()
-                    notif_confirm[0] = False
-                    notif_confirm[1] = False
-                    semaphore.release()
-                else: 
-                    data_from_baby(self, 1)
-            else: 
-                data_from_baby(self, 0)
+    def callback(ch, method, properties, body):
+        print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
+        semaphore.acquire()
+        notif_confirm[1] = True
+        semaphore.release()
 
-            line = self.get_data_baby_monitor()
-            keys = ('id', 'breathing', 'time_no_breathing', 'crying', 'sleeping')
-            data = dict(zip(keys, line))
-            message = str(data)
-            if data['crying'] or data['time_no_breathing'] >= 5:
-                message = 'NOTIFICATION: ' + message
-                semaphore.acquire()
-                notif_confirm[0] = True
-                semaphore.release()
+    channel.basic_consume(
+        queue= queue_baby_monitor, on_message_callback=callback, auto_ack=True)
 
-            else: 
-                message = 'STATUS: ' + message 
-
-            self.channel.basic_publish(exchange=exchange_baby_monitor, routing_key=routing_key_smartphone, body=message)
-
-            print(" [x] Sent Topic: %r | Message: %r" % (routing_key_smartphone, message))
-            sleep(2)
-
-    def create_table_baby_monitor(self):
-        try:
-            baby_monitor_table = Table(
-                "baby_monitor",
-                self.meta,
-                Column("id", Integer, primary_key=True, autoincrement=True),
-                Column("breathing", Boolean),
-                Column("time_no_breathing", Integer),
-                Column("crying", Boolean),
-                Column("sleeping", Boolean),
-            )
-            self.meta.create_all(self.engine)
-
-            return baby_monitor_table
-        except:
-            connection = self.engine.connect()
-            bm = db.Table('baby_monitor', self.meta, autoload=True, autoload_with=self.engine)
-            return bm
-
-    def insert_baby_monitor(self, data):
-        try:
-            conn = self.engine.connect()
-            query = self.bm.insert()
-            conn.execute(query, data)
-        except:
-            conn = self.engine.connect()
-            conn.rollback()
-
-    def get_data_baby_monitor(self):
-        conn = self.engine.connect()
-        query = db.select([self.bm])
-        result = conn.execute(query).fetchall()
-
-        if result: 
-            return result[-1]
-        else: 
-            return 0 
+    channel.start_consuming()

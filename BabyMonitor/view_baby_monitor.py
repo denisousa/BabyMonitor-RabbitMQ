@@ -21,11 +21,11 @@ class Window(QMainWindow):
         self.start_thread = False
 
     def button_pressed_start(self):
-        thread_status = threading.Thread(target=self.show_message, args=())
-        thread_status.start()
+        start()
         self.button = True
         self.start_thread = True
-        start()
+        thread_status = threading.Thread(target=self.show_message, args=())
+        thread_status.start()
         self.connection.setText('<strong>Open connection<\strong>')
         self.connection.setFont(QtGui.QFont('Arial', 14))
         self.connection.adjustSize()

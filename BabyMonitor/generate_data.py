@@ -33,14 +33,12 @@ def count(function):
                     return function(0, monitor)
                 return function(1, monitor)
             else:        
-                wrapped.calls = 1
+                wrapped.calls = 0
                 max_no_changes = random.randint(3,10)
                 return function(0, monitor)
-    
+     
         if flag == 1: 
             wrapped.calls += 1
-            if not breathing:
-                return function(wrapped.calls, monitor)
             return function(1, monitor)
 
     wrapped.calls = 0
@@ -87,7 +85,7 @@ def data_from_baby(flag, monitor):
         keys = ('id', 'breathing', 'time_no_breathing', 'crying', 'sleeping')
         data = dict(zip(keys, line))
         if not data['breathing']:
-            data['time_no_breathing'] += 1
+            data['time_no_breathing'] += 2
         data.pop('id')
 
     monitor.insert_baby_monitor(data)
