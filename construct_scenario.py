@@ -18,7 +18,6 @@ exchange_baby_monitor = "exchange_baby_monitor"
 #channel = connection.channel()
 
 # Declare exchange of the type 'topic' with name 'exchange_baby_monitor'
-
 def declare_exchanges_queues(channel):
     channel.exchange_declare(exchange=exchange_baby_monitor, exchange_type="topic")
     channel.queue_declare(queue_baby_monitor)
