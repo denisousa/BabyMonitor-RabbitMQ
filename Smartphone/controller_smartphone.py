@@ -7,7 +7,7 @@ from model_smartphone import Smartphone
 smartphone_consumer = Smartphone()
 
 #start conection
-def start():
+def smartphone_start():
 	global smartphone_producer, smartphone_consumer
 
 	smartphone_consumer.is_consumer = True
@@ -15,17 +15,17 @@ def start():
 	smartphone_consumer.start()
 	
 #stop conection
-def stop():
+def smartphone_stop():
 	global smartphone_consumer
 	smartphone_consumer.button_is_pressed = False
 
 #get data from db
-def get_data():
+def smartphone_get_data():
 	global smartphone_consumer
 
 	return smartphone_consumer.get_data_baby_monitor()
 
-def confirm_notification():
+def smartphone_confirm_notification():
 	global smartphone_producer
 
 	smartphone_producer = Smartphone()

@@ -21,7 +21,7 @@ class Window(QMainWindow):
         self.start_thread = False
 
     def button_pressed_start(self):
-        start()
+        baby_monitor_start()
         self.button = True
         self.start_thread = True
         thread_status = threading.Thread(target=self.show_message, args=())
@@ -34,7 +34,7 @@ class Window(QMainWindow):
     def button_pressed_stop(self):
         self.button = False
         self.start_thread = False
-        stop()
+        baby_monitor_stop()
         self.connection.setText('<strong>Closed connection<\strong>')
         self.connection.setFont(QtGui.QFont('Arial', 14))
         self.connection.adjustSize()
@@ -43,7 +43,7 @@ class Window(QMainWindow):
     def show_message(self):
         while True:
             if self.start_thread: 
-                data = get_data()
+                data = baby_monitor_get_data()
                 self.send_breathing.setText('Breathing: {}'.format(data['breathing']))
                 self.send_breathing.setFont(QtGui.QFont('Arial', 12)) 
                 self.send_breathing.adjustSize()
@@ -64,7 +64,7 @@ class Window(QMainWindow):
                 self.send_sleeping.adjustSize() 
                 self.send_sleeping.move(60, 190)
 
-                if 'Pending' in get_confirmation():
+                if 'Pending' in baby_monitor_get_confirmation():
                     self.pending.setText(get_confirmation())
                     self.pending.setFont(QtGui.QFont('Arial', 12)) 
                     self.pending.adjustSize() 

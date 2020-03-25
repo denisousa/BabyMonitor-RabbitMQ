@@ -19,7 +19,7 @@ class Window(QMainWindow):
         self.InitWindow()
 
     def button_pressed_start(self):
-        turn_on()
+        smart_tv_turn_on()
         thread_status = threading.Thread(target=self.show_message, args=())
         thread_status.start()
         #self.button = True

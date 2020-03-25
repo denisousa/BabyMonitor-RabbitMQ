@@ -2,7 +2,7 @@ import pika
 import sys
 import random
 sys.path.append('../')
-from construct_scenario import queue_smart_tv, routing_key_smart_tv, exchange_baby_monitor
+from construct_scenario import *
 from sqlalchemy import Table, Column, String, Integer
 import threading
 
@@ -11,6 +11,7 @@ class Smart_TV(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self)
+        declare_exchanges_queues()
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         self.channel = self.connection.channel()
         self.channel.queue_bind(
@@ -20,7 +21,6 @@ class Smart_TV(threading.Thread):
         self.application = False
         self.application_thread = threading.Thread(target=self.aplication_func, args=())
         self.button_is_pressed = False
-        #declare_exchanges_queues(self.channel)
 
     def run(self):
         while self.button_is_pressed:
