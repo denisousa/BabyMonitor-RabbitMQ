@@ -21,25 +21,44 @@ class Window(QMainWindow):
         self.left = 1000
         self.width = 2000
         self.height = 2000
-        self.button = False
+
+        self.button_bm = False
+        self.button_smp = False
+        self.button_smtv = False
+        self.button_app = False
+
         self.start_thread = False
         self.InitWindow()
 
     def button_pressed_start(self, device):
         if device == 'baby_monitor':
             baby_monitor_start()
-            self.button = True
+            self.button_bm = True
             self.start_thread = True
             thread_status = threading.Thread(target=self.baby_monitor_show_message, args=())
             thread_status.start()
-        elif device == 'smartphone':
-            pass
+        elif device == 'smartphone':            
+            smartphone_start()
+            self.button_smp = True #usar o mesmo self.button pra todo não dá problema?
+            self.thread_smartphone_data = threading.Thread(target=self.smartphone_show_message, args=())
+            self.thread_smartphone_data.start()
         else:
             pass
         self.connection.setText('<strong>Open connection<\strong>')
         self.connection.setFont(QtGui.QFont('Arial', 12))
         self.connection.adjustSize()
         self.connection.move(70, 550)
+
+    def button_pressed_confirm(self):
+        smartphone_confirm_notification()
+        data = baby_monitor_get_data()
+        #self.button_confirm.setEnabled(False)
+        #self.alert.setText("")
+        #smartphone_consumer.is_notification = False
+        #self.message_confirm.setText("Notification Confirmed")
+        #self.message_confirm.setFont(QtGui.QFont('Arial', 12))
+        #self.message_confirm.adjustSize()
+        #self.message_confirm.move(60, 260) 
     
     def button_pressed_stop(self, device):
         if device == 'baby_monitor':
@@ -93,6 +112,16 @@ class Window(QMainWindow):
                     self.message_from_smartphone.move(70, 460)
                     self.pending.setText("")
 
+    def smartphone_show_message(self):
+        global position_x
+
+        while self.button_smp:
+            data = smartphone_get_data()
+            self.send_breathing.setText('Breathing: {}'.format(data['breathing']))
+            self.send_time_no_breathing.setText('Time no Breathing: {}'.format(data['time_no_breathing']))
+            self.send_crying.setText('Crying: {}'.format(data['crying']))
+            self.send_sleeping.setText('Sleeping: {}'.format(data['sleeping']))
+
     def create_interface(self, position_x, name_interface):
         # Define title device
         self.title_baby_monitor = QLabel(self)
@@ -141,6 +170,9 @@ class Window(QMainWindow):
             self.button = QPushButton('Stop', self)
             self.button.move(position_x + 100, 600)
             self.button.clicked.connect(partial(self.button_pressed_stop, 'smartphone'))
+            self.button = QPushButton('Confirm', self)
+            self.button.move(position_x - 20, 640)
+            self.button.clicked.connect(self.button_pressed_confirm)
         else:
             self.button = QPushButton('Start', self)
             self.button.move(position_x - 20, 600)
@@ -148,7 +180,6 @@ class Window(QMainWindow):
             self.button = QPushButton('Stop', self)
             self.button.move(position_x + 100, 600)
             self.button.clicked.connect(partial(self.button_pressed_stop, 'tv'))
-
 
 
     def InitWindow(self):
