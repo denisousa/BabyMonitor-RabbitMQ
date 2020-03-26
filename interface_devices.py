@@ -86,14 +86,17 @@ class Window(QMainWindow):
 
     def button_pressed_confirm(self):
         smartphone_confirm_notification()
-        #data = baby_monitor_get_data()
-        #self.button_confirm.setEnabled(False)
-        #self.alert.setText("")
-        #smartphone_consumer.is_notification = False
-        #self.message_confirm.setText("Notification Confirmed")
-        #self.message_confirm.setFont(QtGui.QFont('Arial', 12))
-        #self.message_confirm.adjustSize()
-        #self.message_confirm.move(60, 260) 
+        data = baby_monitor_get_data()
+        '''self.button_confirm.setEnabled(False)
+        self.alert.setText("")
+        smartphone_consumer.is_notification = False
+        self.message_confirm.setText("Notification Confirmed")
+        self.message_confirm.setFont(QtGui.QFont('Arial', 12))
+        self.message_confirm.adjustSize()
+        self.message_confirm.move(500, 500)
+        sleep(2)
+        self.message_confirm.setText('')'''
+
 
     def baby_monitor_show_message(self):
         global position_x_bm
@@ -139,6 +142,7 @@ class Window(QMainWindow):
         
         while self.button_smp: 
             data = baby_monitor_get_data()
+            
             self.send_breathing_smp.setText('Breathing: {}'.format(data['breathing']))
             self.send_breathing_smp.setFont(QtGui.QFont('Arial', 12)) 
             self.send_breathing_smp.adjustSize()
@@ -159,47 +163,53 @@ class Window(QMainWindow):
             self.send_sleeping_smp.adjustSize() 
             self.send_sleeping_smp.move(position_x_smp, 430)
 
-            if smartphone_consumer.is_notification:
+            if smartphone_get_notfication():
                 if not data['breathing']:
                     txt = "ALERT: Baby Emma isn't breathing!"
-                    self.alert.setText(txt)
-                    self.alert.setFont(QtGui.QFont('Arial', 12))
-                    self.alert.adjustSize()
-                    self.alert.move(position_x_smp, 500)
-                    self.button_confirm.setEnabled(True)
                 
                 elif data['crying']:
                     txt = 'ALERT: Baby Emma is crying!'
-                    self.alert.setText(txt)
-                    self.alert.setFont(QtGui.QFont('Arial', 12))
-                    self.alert.adjustSize()
-                    self.alert.move(position_x_smp, 500)
-                    self.button_confirm.setEnabled(True)
+                
+                self.button_confirm.setEnabled(True)
             else:
-                txt = ''
-                self.alert.setText(txt)
-                self.alert.setFont(QtGui.QFont('Arial', 12))
-                self.alert.adjustSize()
-                self.alert.move(position_x_smp, 500)
+                txt = "Everything's fine"
                 self.button_confirm.setEnabled(False)
-                self.message_confirm.setText("")
-
-   
+        
+            self.alert.setText(txt)
+            self.alert.setFont(QtGui.QFont('Arial', 12))
+            self.alert.adjustSize()
+            self.alert.move(position_x_smp, 500)
+            
     def smtv_show_message(self):
         global position_x_tv
             
         while self.button_smtv:
-            message = smart_tv_get_message()
-            txt_status = ''
-            if smart_tv_get_status:
-                txt_status = 'TV is unblocked.'
+            if smart_tv.status:
+                self.status.setText('TV is unlocked')
+                self.status.setFont(QtGui.QFont('Arial', 12)) 
+                self.status.adjustSize()
+                self.status.move(60, 130)
             else:
-                txt_status = 'TV is blocked.'
-            self.information.setText(txt_status)
-            if self.button_app:
-                self.information.setText('App is running')
-            if message: 
-                self.receive.setText(message)
+                self.status.setText('TV is locked')
+                self.status.setFont(QtGui.QFont('Arial', 12)) 
+                self.status.adjustSize()
+                self.status.move(60, 130)
+
+            if smart_tv.application:
+                self.app.setText('App running')
+                self.app.setFont(QtGui.QFont('Arial', 12)) 
+                self.app.adjustSize()
+                self.app.move(60, 160)
+            elif not smart_tv.application:
+                self.app.setText('App stop')
+                self.app.setFont(QtGui.QFont('Arial', 12)) 
+                self.app.adjustSize()
+                self.app.move(60, 160)
+            elif smart_tv.application == None:
+                self.app.setText('')
+                self.app.setFont(QtGui.QFont('Arial', 12)) 
+                self.app.adjustSize()
+                self.app.move(60, 160)
 
     def create_interface(self, position_x, name_interface):
         # Define title device
@@ -240,38 +250,39 @@ class Window(QMainWindow):
         self.send_crying_smp = QLabel(self)
         self.send_sleeping_smp = QLabel(self)
         self.alert = QLabel(self)
-
+        self.message_confirm = QLabel(self) 
         
         if name_interface == 'Baby Monitor':
-            self.button = QPushButton('Start', self)
-            self.button.move(position_x - 20, 600)
-            self.button.clicked.connect(partial(self.button_pressed_start, 'baby_monitor'))
-            self.button = QPushButton('Stop', self)
-            self.button.move(position_x + 100, 600)
-            self.button.clicked.connect(partial(self.button_pressed_stop, 'baby_monitor'))
+            self.button_start = QPushButton('Start', self)
+            self.button_start.move(position_x - 20, 600)
+            self.button_start.clicked.connect(partial(self.button_pressed_start, 'baby_monitor'))
+            self.button_stop = QPushButton('Stop', self)
+            self.button_stop.move(position_x + 100, 600)
+            self.button_stop.clicked.connect(partial(self.button_pressed_stop, 'baby_monitor'))
+        
         elif name_interface == 'Smartphone':
-            self.button = QPushButton('Start', self)
-            self.button.move(position_x - 20, 600)
-            self.button.clicked.connect(partial(self.button_pressed_start, 'smartphone'))
-            self.button = QPushButton('Stop', self)
-            self.button.move(position_x + 100, 600)
-            self.button.clicked.connect(partial(self.button_pressed_stop, 'smartphone'))
-            self.button = QPushButton('Confirm', self)
-            self.button.move(position_x - 20, 640)
-            self.button.clicked.connect(self.button_pressed_confirm)
+            self.button_start = QPushButton('Start', self)
+            self.button_start.move(position_x - 20, 600)
+            self.button_start.clicked.connect(partial(self.button_pressed_start, 'smartphone'))
+            self.button_stop = QPushButton('Stop', self)
+            self.button_stop.move(position_x + 100, 600)
+            self.button_stop.clicked.connect(partial(self.button_pressed_stop, 'smartphone'))
+            self.button_confirm = QPushButton('Confirm', self)
+            self.button_confirm.move(position_x - 20, 640)
+            self.button_confirm.clicked.connect(self.button_pressed_confirm)
         else:
-            self.button = QPushButton('Start', self)
-            self.button.move(position_x - 20, 600)
-            self.button.clicked.connect(partial(self.button_pressed_start, 'tv'))
-            self.button = QPushButton('Stop', self)
-            self.button.move(position_x + 100, 600)
-            self.button.clicked.connect(partial(self.button_pressed_stop, 'tv'))
-            self.button = QPushButton('Start App', self)
-            self.button.move(position_x - 20, 640)
-            self.button.clicked.connect(self.button_pressed_confirm)
-            self.button = QPushButton('Stop App', self)
-            self.button.move(position_x + 100, 640)
-            self.button.clicked.connect(self.button_pressed_confirm)
+            self.button_start = QPushButton('Start', self)
+            self.button_start.move(position_x - 20, 600)
+            self.button_start.clicked.connect(partial(self.button_pressed_start, 'tv'))
+            self.button_stop = QPushButton('Stop', self)
+            self.button_stop.move(position_x + 100, 600)
+            self.button_stop.clicked.connect(partial(self.button_pressed_stop, 'tv'))
+            self.button_start_app = QPushButton('Start App', self)
+            self.button_start_app.move(position_x - 20, 640)
+            self.button_start_app.clicked.connect(self.button_pressed_start_app)
+            self.button_stop_app = QPushButton('Stop Stop', self)
+            self.button_stop_app.move(position_x + 100, 640)
+            self.button_stop_app.clicked.connect(self.button_pressed_stop_app)
 
    
     def InitWindow(self):

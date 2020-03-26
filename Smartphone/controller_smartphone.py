@@ -5,11 +5,10 @@ sys.path.append('../')
 from model_smartphone import SmartphoneConsumer, SmartphoneProducer
 
 smartphone_consumer = SmartphoneConsumer()
-smartphone_producer = SmartphoneProducer()
 
 #start conection
 def smartphone_start():
-	global smartphone_producer
+	global smartphone_consumer
 	smartphone_consumer.button_is_pressed = True
 	smartphone_consumer.start()
 	
@@ -25,10 +24,17 @@ def smartphone_get_data():
 	return smartphone_consumer.get_data_baby_monitor()
 
 def smartphone_confirm_notification():
-	global smartphone_producer
+	global smartphone_consumer
 
-	smartphone_producer.button_is_pressed = True
-	smartphone_producer.start()
-	'''if smartphone_consumer.is_notification:
+	smartphone_producer = SmartphoneProducer()
+	if smartphone_consumer.is_notification:
+		smartphone_producer.button_is_pressed = True
+		#smartphone_producer = SmartphoneProducer()
+		smartphone_producer.start()
 		smartphone_consumer.is_notification = False
-		smartphone_producer.button_is_pressed = True'''
+
+def smartphone_get_notfication():
+	global smartphone_consumer
+
+	#print(f'from controller: {smartphone_consumer.is_notification}')
+	return smartphone_consumer.is_notification
