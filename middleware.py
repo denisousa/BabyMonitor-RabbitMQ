@@ -5,9 +5,11 @@ sys.path.append('./Smartphone')
 sys.path.append('./SmartTv')
 from construct_scenario import *
 from SmartTv.controller_smart_tv import *
+from Smartphone.controller_smartphone import smartphone_confirm_notification
 import threading
 from pyrabbit.api import Client
 import time
+import itertools
 
 
 # Se insrever em todos os tópicos - OK
@@ -16,7 +18,6 @@ import time
 # Quando tempo alcança x, ele tenta enviar a msg que recebeu pra tv (get_Status)
 # Se TV bloqueada, stop application, envia notificação e start application.
 
-watch_time = None
 semaphore = threading.BoundedSemaphore()
 
 class Middleware(threading.Thread):
@@ -26,106 +27,100 @@ class Middleware(threading.Thread):
             pika.ConnectionParameters(host='localhost'))
         self.channel = self.connection.channel()
         self.time_no_response = 0
+        self.count = 0
 
-    def get_queues_and_exchanges_and_routings(self):
+    def get_bindings(self):
         client = Client('localhost:15672', 'guest', 'guest')
-        queues = [q['name'] for q in client.get_queues()]
-        exchanges = [e['name'] for e in client.get_exchanges()]
-        routing_keys = [r['routing_key'] for r in client.get_bindings()]
+        bindings = client.get_bindings()
+        bindings = bindings[3:]
 
-        # Exclude first 6 exchanges default rabbitmq
-        return [queues, exchanges[7:], routing_keys]
+        return bindings
 
     def subscribe_in_all_queues(self):
-        queues = self.get_queues_and_exchanges_and_routings()[0]
-        exchanges = self.get_queues_and_exchanges_and_routings()[1]
-        routings = self.get_queues_and_exchanges_and_routings()[2]
-
-        exchange_conn_queue = []
-        for exchange in exchanges:
-            for queue in queues:
-                try:
-                    self.channel.queue_bind(
-                        exchange=exchange, queue=queue, routing_key='*')
-                    exchange_conn_queue.append((exchange, queue))
-                except:
-                    continue
         
-        return queues, exchanges, routings
+        bindings = self.get_bindings()
+        
+        for i in range(len(bindings)):
+
+            self.channel.queue_bind(
+                exchange=bindings[i]['source'], queue=bindings[i]['destination'], routing_key=bindings[i]['routing_key'])
+
+        return bindings
         
     def run(self):
         
-        queues, exchanges, routings = self.subscribe_in_all_queues()
+        bindings = self.subscribe_in_all_queues()
 
         def callback(ch, method, properties, body):
-            print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
+            print(" [MIDDLEWARE] Receive Topic: %r | Message: %r" % (method.routing_key, body))
             if 'tv' in str(method.routing_key):
                 self.time_no_response = 0
-                
-            self.read_message(str(body), routings, exchanges)
+                print('TV successfully received the message.')
+            
+            else:
+                self.read_message(str(body), bindings)
         
-        for q in queues:
+        for i in range(len(bindings)):
             self.channel.basic_consume(
-                queue=q, on_message_callback=callback, auto_ack=True)
+                queue=bindings[i]['destination'], on_message_callback=callback, auto_ack=True, ("x-priority", 10))
 
         self.channel.start_consuming()
     
-    def read_message(self, message, routings, exchanges):
-        global watch_time, semaphore 
-
+    def read_message(self, message, bindings):
+        global semaphore 
+        print('from reading message')
         if 'NOTIFICATION' in message:
             data = message.replace('b"NOTIFICATION: ', '')
             data = data.replace('"', '')
             data = eval(data)
             message = 'NOTIFICATION: ' + str(data)
-            watch_time = threading.Thread(target=watch_confirmation, args=(self, message, routings, exchanges, ))
-            watch_time.start()
+            self.count += 1
+            print('count ', self.count)
+            if self.count == 1:
+                self.time_no_response = time.time()
+
+            else:
+                self.time_no_response = time.time() - self.time_no_response
+                print('Time No response: ', self.time_no_response)
+                if self.time_no_response >= 5:
+                    self.forward_message(message, bindings)
 
         if 'CONFIRMATION' in message:
             semaphore.acquire()
             self.time_no_response = 0
-            semaphore.release()
+            semaphore.release() 
 
-    def publish_message(self, message, routings, exchanges):
-        routing_key = [routing for routing in routings if 'tv_route' in routing][0]
-        for exchange in exchanges:
+    def forward_message(self, message, bindings):
+        print('Status da tv: ', smart_tv_get_status())
+        if smart_tv_get_status():
+            self.publish_message(message, bindings)
+        else:
+            print('Stopping application')
+            smart_tv_stop_app()
+            self.publish_message(message, bindings)
+            time.sleep(2)
+            print('Reopening application')
+            smart_tv_start_app
+
+    def publish_message(self, message, bindings):
+        ex_rt = []
+
+        for i in range(len(bindings)):
+            if 'monitor' not in bindings[i]['destination'] and 'smartphone' not in bindings[i]['destination']:
+                ex_rt = [(bindings[i]['source'], bindings[i]['routing_key'])]
+
+        for i in ex_rt:
             try:
                 print('Trying to send message to tv')
-                self.channel.basic_publish(exchange=exchange, routing_key=routing_key, body=message)
+                self.channel.basic_publish(exchange=i[0], routing_key=i[1], body=message)
+                self.count = 0
+                smartphone_confirm_notification()
+                print('Sending confirmation to monitor')
                 break
             except:
                 pass
-
-    def forward_message(self, message, routings, exchanges):
-        if get_status():
-            self.publish_message(message, routings, exchanges)
-        else:
-            stop_app()
-            self.publish_message(message, routings, exchanges)
-            start_app()
-
-def watch_confirmation(middleware, message, routings, exchanges):
-    global semaphore
-
-    semaphore.acquire()
-    middleware.time_no_response = 1
-    semaphore.release()
-
-    while middleware.time_no_response != 0: 
-        semaphore.acquire()
-        middleware.time_no_response = int(time.time() - middleware.time_no_response)
-        semaphore.release()
-        print('Time no response: ', middleware.time_no_response)
-
-        if middleware.time_no_response > 5: 
-            print('Message will be forwarded to Smart TV')
-            middleware.forward_message(message, routings, exchanges)
-            middleware.time_no_response = 0
 
 def main():
     thread_middleware = Middleware()
     thread_middleware.start()
     
-
-if __name__ == '__main__':
-    main()

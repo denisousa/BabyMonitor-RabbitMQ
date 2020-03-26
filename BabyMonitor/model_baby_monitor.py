@@ -38,9 +38,11 @@ class BabyMonitorConsumer(threading.Thread):
 			print(' [*] BabyMonitor waiting for messages. To exit press CTRL+C')
 
 			def callback_baby_monitor(ch, method, properties, body):
-				if method.routing_key == routing_key_baby_monitor:
-					print(" [BabyMonitor] Receive Topic: %r | Message: %r \n" % (method.routing_key, body))
-					notif_confirm[1] = True
+				
+				print(" [BabyMonitor] Receive Topic: %r | Message: %r \n" % (method.routing_key, body))
+				semaphore.acquire()
+				notif_confirm[1] = True
+				semaphore.release()
 
 			self.channel.basic_consume(
 				queue=queue_baby_monitor, on_message_callback=callback_baby_monitor, auto_ack=True)
@@ -67,28 +69,6 @@ class BabyMonitorConsumer(threading.Thread):
 			connection = self.engine.connect()
 			bm = db.Table('baby_monitor', self.meta, autoload=True, autoload_with=self.engine)
 			return bm
-
-	def insert_baby_monitor(self, data):
-		try:
-			conn = self.engine.connect()
-			query = self.bm.insert()
-			conn.execute(query, data)
-			print('Success')
-		except:
-			conn = self.engine.connect()
-			conn.rollback()
-			print('Failed')
-
-	def get_data_baby_monitor(self):
-		conn = self.engine.connect()
-		query = db.select([self.bm])
-		result = conn.execute(query).fetchall()
-
-		if result: 
-			return result[-1]
-		else: 
-			return 0 
-
 
 class BabyMonitorProducer(threading.Thread):
 	def __init__(self):
@@ -136,7 +116,7 @@ class BabyMonitorProducer(threading.Thread):
 			self.channel.basic_publish(exchange=exchange_baby_monitor, routing_key=routing_key_smartphone, body=message)
 
 			print(" [BabyMonitor] Sent Topic: %r | Message: %r \n" % (routing_key_smartphone, message))
-			sleep(2)
+			sleep(1)
 
 	def create_table_baby_monitor(self):
 		try:
@@ -164,7 +144,7 @@ class BabyMonitorProducer(threading.Thread):
 			conn.execute(query, data)
 		except:
 			conn = self.engine.connect()
-			conn.rollback()
+			#conn.rollback()
 
 	def get_data_baby_monitor(self):
 		conn = self.engine.connect()

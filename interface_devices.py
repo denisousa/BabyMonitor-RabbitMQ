@@ -12,6 +12,7 @@ from SmartTv.controller_smart_tv import *
 import threading
 from functools import partial
 from time import sleep
+from middleware import main
 #from generic_interface import create_interface 
 
 position_x_bm = 70
@@ -307,16 +308,34 @@ class Window(QMainWindow):
 
    
     def InitWindow(self):
+        global position_x_bm, position_x_smp, position_x_smtv
 
         self.setGeometry(self.top, self.left, self.width, self.height)
+
+        self.label = QLabel(self)
+        self.label.setPixmap(QPixmap("babymonitor.png"))
+        self.label.setGeometry(position_x_bm, 50, 250, 250)
+
+        self.label = QLabel(self)
+        self.label.setPixmap(QPixmap("smartphone.png"))
+        self.label.setGeometry(position_x_smp, 50, 512, 512)
+
+        self.label = QLabel(self)
+        self.label.setPixmap(QPixmap("monitor.svg"))
+        self.label.setGeometry(position_x_smtv, 50, 512, 512)
+
         self.create_interface(position_x_bm, 'Baby Monitor')
         self.create_interface(position_x_smp, 'Smartphone')
         self.create_interface(position_x_smtv, 'Tv')
+        self.setWindowIcon(QtGui.QIcon("./BabyMonitor/babymonitor.png"))
+        self.setWindowIcon(QtGui.QIcon("./BabyMonitor/babymonitor.png"))
+        self.setWindowIcon(QtGui.QIcon("./BabyMonitor/babymonitor.png"))
         
         self.show()
 
 
 if __name__ == "__main__":
+    main()
     app = QApplication(sys.argv)
     ex = Window()
     sys.exit(app.exec_())

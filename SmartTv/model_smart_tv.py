@@ -3,9 +3,7 @@ import sys
 import random
 sys.path.append('../')
 from construct_scenario import *
-from sqlalchemy import Table, Column, String, Integer
 import threading
-
 
 class Smart_TV(threading.Thread):
 
@@ -26,7 +24,7 @@ class Smart_TV(threading.Thread):
         self.message = ''
 
     def run(self):
-        while self.button_is_pressed:
+        if self.button_is_pressed:
             print(' [*] Smart Tv waiting for messages. To exit press CTRL+C')
 
             if self.status:
@@ -36,7 +34,7 @@ class Smart_TV(threading.Thread):
                 print('TV is locked')
 
             def callback_smart_tv(ch, method, properties, body):
-                print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
+                print(" [SmartTv] Receive Topic: %r | Message: %r" % (method.routing_key, body))
                 self.message = str(body).replace('b"', '')
                 self.message = self.message.replace('"', '')
             
@@ -48,6 +46,7 @@ class Smart_TV(threading.Thread):
                     self.message = ''
 
             self.channel.start_consuming()
+            self.connection.close()
 
     def aplication_func(self):
         while self.application:

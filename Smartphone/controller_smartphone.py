@@ -25,17 +25,15 @@ def smartphone_get_data():
 
 def smartphone_confirm_notification():
 	global smartphone_consumer
-
 	smartphone_producer = None
 	
 	if smartphone_consumer.is_notification:
+		print('From controller. Sending confirmation')
 		smartphone_producer = SmartphoneProducer()
 		smartphone_producer.button_is_pressed = True
-		smartphone_producer.start()
 		smartphone_consumer.is_notification = False
+		smartphone_producer.start()
 
 def smartphone_get_notfication():
 	global smartphone_consumer
-
-	#print(f'from controller: {smartphone_consumer.is_notification}')
 	return smartphone_consumer.is_notification

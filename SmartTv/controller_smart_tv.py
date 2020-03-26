@@ -29,7 +29,6 @@ def smart_tv_stop_app():
     global smart_tv
 
     smart_tv.application = False
-    #smart_tv.application_thread = threading.Thread(target=self.aplication_func, args=())
     smart_tv.status = True
     
 def smart_tv_get_status():

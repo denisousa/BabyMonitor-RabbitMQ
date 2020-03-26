@@ -13,7 +13,9 @@ queue_smart_tv = "queue_smart_tv"
 queue_smartphone = "queue_smartphone"
 exchange_baby_monitor = "exchange_baby_monitor"
 
-def declare_exchanges_queues():
+
+
+'''def declare_exchanges_queues():
     queue_baby_monitor = "queue_baby_monitor"
     queue_smart_tv = "queue_smart_tv"
     queue_smartphone = "queue_smartphone"
@@ -24,4 +26,4 @@ def declare_exchanges_queues():
     channel.queue_declare(queue_baby_monitor)
     channel.queue_declare(queue_smartphone)
     channel.queue_declare(queue_smart_tv)
-    connection.close()
+    connection.close()'''
