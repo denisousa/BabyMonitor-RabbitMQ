@@ -26,10 +26,11 @@ def smartphone_get_data():
 def smartphone_confirm_notification():
 	global smartphone_consumer
 
-	smartphone_producer = SmartphoneProducer()
+	smartphone_producer = None
+	
 	if smartphone_consumer.is_notification:
+		smartphone_producer = SmartphoneProducer()
 		smartphone_producer.button_is_pressed = True
-		#smartphone_producer = SmartphoneProducer()
 		smartphone_producer.start()
 		smartphone_consumer.is_notification = False
 
