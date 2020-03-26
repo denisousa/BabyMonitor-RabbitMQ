@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QLabel, QMainWindow, QApplication, QWidget, QVBoxLayout, QPushButton
+from PyQt5.QtWidgets import QLabel, QMainWindow, QApplication, QWidget, QVBoxLayout, QPushButton, QCheckBox
 from PyQt5.QtGui import QPixmap, QPainter, QPen
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
@@ -16,8 +16,8 @@ from middleware import main
 #from generic_interface import create_interface 
 
 position_x_bm = 70
-position_x_smp = position_x_bm * 7.5
-position_x_smtv = position_x_bm * 15
+position_x_smp = position_x_bm * 5
+position_x_smtv = position_x_bm * 10
 
 class Window(QMainWindow):
     def __init__(self):
@@ -34,8 +34,13 @@ class Window(QMainWindow):
         self.button_smtv = False
         self.button_smp_confirm = False
 
+        self.is_adapted = False
+
         #self.start_thread = False
         self.InitWindow()
+
+    def start_cautious_adaptation(self):
+        main(self.is_adapted)
 
     def button_pressed_start(self, device):
         if device == 'baby_monitor':
@@ -97,6 +102,12 @@ class Window(QMainWindow):
         sleep(2)
         self.message_confirm.setText('')'''
 
+    def check_adaptation(self, state):
+        if state == QtCore.Qt.Checked:        
+            self.is_adapted = True
+        else: 
+            self.is_adapted = False
+
     def baby_monitor_show_message(self):
         global position_x_bm
         
@@ -140,27 +151,50 @@ class Window(QMainWindow):
         global position_x_smp
         
         while self.button_smp: 
-            data = baby_monitor_get_data()
-            
-            self.receive_breathing_smp.setText('Breathing: {}'.format(data['breathing']))
-            self.receive_breathing_smp.setFont(QtGui.QFont('Arial', 12)) 
-            self.receive_breathing_smp.adjustSize()
-            self.receive_breathing_smp.move(position_x_smp, 370)
+            data = smartphone_get_message()
+            if isinstance(data, dict):
+                
+                self.receive_breathing_smp.setText('Breathing: {}'.format(data['breathing']))
+                self.receive_breathing_smp.setFont(QtGui.QFont('Arial', 12)) 
+                self.receive_breathing_smp.adjustSize()
+                self.receive_breathing_smp.move(position_x_smp, 370)
 
-            self.receive_time_no_breathing_smp.setText('Time no Breathing: {}'.format(data['time_no_breathing']))
-            self.receive_time_no_breathing_smp.setFont(QtGui.QFont('Arial', 12)) 
-            self.receive_time_no_breathing_smp.adjustSize() 
-            self.receive_time_no_breathing_smp.move(position_x_smp, 390)
+                self.receive_time_no_breathing_smp.setText('Time no Breathing: {}'.format(data['time_no_breathing']))
+                self.receive_time_no_breathing_smp.setFont(QtGui.QFont('Arial', 12)) 
+                self.receive_time_no_breathing_smp.adjustSize() 
+                self.receive_time_no_breathing_smp.move(position_x_smp, 390)
 
-            self.receive_crying_smp.setText('Crying: {}'.format(data['crying']))
-            self.receive_crying_smp.setFont(QtGui.QFont('Arial', 12)) 
-            self.receive_crying_smp.adjustSize() 
-            self.receive_crying_smp.move(position_x_smp, 410)
+                self.receive_crying_smp.setText('Crying: {}'.format(data['crying']))
+                self.receive_crying_smp.setFont(QtGui.QFont('Arial', 12)) 
+                self.receive_crying_smp.adjustSize() 
+                self.receive_crying_smp.move(position_x_smp, 410)
 
-            self.receive_sleeping_smp.setText('Sleeping: {}'.format(data['sleeping']))
-            self.receive_sleeping_smp.setFont(QtGui.QFont('Arial', 12)) 
-            self.receive_sleeping_smp.adjustSize() 
-            self.receive_sleeping_smp.move(position_x_smp, 430)
+                self.receive_sleeping_smp.setText('Sleeping: {}'.format(data['sleeping']))
+                self.receive_sleeping_smp.setFont(QtGui.QFont('Arial', 12)) 
+                self.receive_sleeping_smp.adjustSize()
+                self.receive_sleeping_smp.move(position_x_smp, 430)
+
+                self.alert.setText("Everything's fine :)")
+                self.alert.setFont(QtGui.QFont('Arial', 12))
+                self.alert.adjustSize()
+                self.alert.move(position_x_smp, 500)
+
+                self.notification.setText("")
+            else:
+                self.notification.setFixedWidth(150)
+                self.notification.setWordWrap(True)
+                self.notification.setFont(QtGui.QFont('Arial', 12))
+                self.notification.adjustSize()
+                self.notification.move(position_x_smp, 370)
+                self.notification.setText(data.replace('NOTIFICATION', 'Notification'))
+
+                self.receive_breathing_smp.setText('')
+                self.receive_time_no_breathing_smp.setText('')
+                self.receive_crying_smp.setText('')
+                self.receive_sleeping_smp.setText('')
+                self.alert.setText("")
+                
+                self.button_confirm.setEnabled(True)
 
             if self.button_smp_confirm:
                 self.send_confirmation_smp.setText('Confirmation Sent.')
@@ -168,29 +202,9 @@ class Window(QMainWindow):
                 self.send_confirmation_smp.adjustSize() 
                 self.send_confirmation_smp.move(position_x_smp, 240)
                 sleep(3)
-
             else:
                 self.send_confirmation_smp.setText('')
-                
-            txt = ''
-            if smartphone_get_notfication():
-                if not data['breathing']:
-                    txt = "ALERT: Baby Emma isn't breathing!"
-                
-                elif data['crying']:
-                    txt = 'ALERT: Baby Emma is crying!'
-                
-                self.button_confirm.setEnabled(True)
-            
-            else:
-                txt = "Everything's fine"
-                self.button_confirm.setEnabled(False)
-                self.button__smp_confirm = False
         
-            self.alert.setText(txt)
-            self.alert.setFont(QtGui.QFont('Arial', 12))
-            self.alert.adjustSize()
-            self.alert.move(position_x_smp, 500)
             
     def smart_tv_show_message(self):
         global position_x_tv
@@ -269,6 +283,7 @@ class Window(QMainWindow):
         self.alert = QLabel(self)
         self.image_smp = QLabel(self)
 
+        self.notification = QLabel(self)
         self.status_smtv = QLabel(self)
         self.app_smtv = QLabel(self)
         self.receive_message_smtv = QLabel(self)
@@ -313,29 +328,39 @@ class Window(QMainWindow):
         self.setGeometry(self.top, self.left, self.width, self.height)
 
         self.label = QLabel(self)
-        self.label.setPixmap(QPixmap("babymonitor.png"))
-        self.label.setGeometry(position_x_bm, 50, 250, 250)
+        self.label.setPixmap(QPixmap("./imgs/babymonitor.png"))
+        self.label.setGeometry(position_x_bm + 10, 10, 200, 200)
 
         self.label = QLabel(self)
-        self.label.setPixmap(QPixmap("smartphone.png"))
-        self.label.setGeometry(position_x_smp, 50, 512, 512)
+        self.label.setPixmap(QPixmap("./imgs/smartphone.png"))
+        self.label.setGeometry(position_x_smp, 50, 100, 100)
 
         self.label = QLabel(self)
-        self.label.setPixmap(QPixmap("monitor.svg"))
-        self.label.setGeometry(position_x_smtv, 50, 512, 512)
+        self.label.setPixmap(QPixmap("./imgs/monitor.svg"))
+        self.label.setGeometry(position_x_smtv, 10, 200, 200)
 
         self.create_interface(position_x_bm, 'Baby Monitor')
         self.create_interface(position_x_smp, 'Smartphone')
         self.create_interface(position_x_smtv, 'Tv')
-        self.setWindowIcon(QtGui.QIcon("./BabyMonitor/babymonitor.png"))
-        self.setWindowIcon(QtGui.QIcon("./BabyMonitor/babymonitor.png"))
-        self.setWindowIcon(QtGui.QIcon("./BabyMonitor/babymonitor.png"))
+        self.setWindowIcon(QtGui.QIcon("./imgs/babymonitor.png"))
+
+        self.title_device = QLabel(self)
+        self.title_device.setText('<strong>BabyMonitor - IoT<\strong>')
+        self.title_device.setFont(QtGui.QFont('Arial', 30)) 
+        self.title_device.adjustSize()
+        self.title_device.move(position_x_smtv + 200, 80)
+
+        self.adaptation = QCheckBox('Cautious adaptation?', self)
+        self.adaptation.setFont(QtGui.QFont('Arial', 12)) 
+        self.adaptation.adjustSize()
+        self.adaptation.stateChanged.connect(self.check_adaptation)
+        self.adaptation.move(position_x_smtv + 280, 150)
+        self.adaptation.clicked.connect(self.start_cautious_adaptation)
         
         self.show()
 
 
 if __name__ == "__main__":
-    main()
     app = QApplication(sys.argv)
     ex = Window()
     sys.exit(app.exec_())

@@ -4,10 +4,7 @@ import sys
 import time
 sys.path.append('../')
 from construct_scenario import *
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, Boolean
-import sqlalchemy as db
 import threading
-
 
 class SmartphoneConsumer(threading.Thread):
 		
@@ -22,7 +19,7 @@ class SmartphoneConsumer(threading.Thread):
 		self.channel.queue_declare(queue_smartphone)
 		self.channel.queue_bind(
 				exchange=exchange_baby_monitor, queue=queue_smartphone, routing_key=routing_key_smartphone)
-		
+		self.message = ''
 		self.button_is_pressed = False
 		self.is_notification = False
 
@@ -33,7 +30,14 @@ class SmartphoneConsumer(threading.Thread):
 			def callback_smartphone(ch, method, properties, body):
 				
 				print(" [Smartphone] Receive Topic: %r | Message: %r \n" % (method.routing_key, body))
-				self.read_message(body)
+				
+				if 'NOTIFICATION' in str(body): 
+					self.is_notification = True
+					self.message = str(body)
+				else: 
+					print("Everything's fine. :)")
+					self.message = str(body).replace('b"STATUS: ', '')
+					self.message = self.message.replace('"', '')
 			
 			self.channel.basic_consume(
 						queue=queue_smartphone, on_message_callback=callback_smartphone, auto_ack=True)
@@ -41,33 +45,6 @@ class SmartphoneConsumer(threading.Thread):
 			self.channel.start_consuming()
 		
 			self.connection.close()
-
-	def read_message(self, message):
-		message = str(message)
-		if 'NOTIFICATION' in message: 
-			data = message.replace('b"NOTIFICATION: ', '')
-			data = data.replace('"', '')
-			data = eval(data)
-			self.is_notification = True
-
-			if not data['breathing']: 
-				print(f"Alert: Baby Emma hasn't been breathing for {data['time_no_breathing']} seconds!")
-			
-			elif not data['crying']:
-				print('Alert: Baby Emma is crying.')
-		
-		else: 
-			print("Everything's fine. :)")
-	
-	def get_data_baby_monitor(self):
-		bm = db.Table('baby_monitor', self.meta, autoload=True, autoload_with=self.engine)
-		conn = self.engine.connect()
-		query = db.select([bm])
-		result = conn.execute(query).fetchall()
-		if result: 
-			return result[-1]
-		else: 
-			return 0 
 
 class SmartphoneProducer(threading.Thread):
 	def __init__(self):

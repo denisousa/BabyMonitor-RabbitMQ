@@ -104,8 +104,15 @@ class BabyMonitorProducer(threading.Thread):
 			keys = ('id', 'breathing', 'time_no_breathing', 'crying', 'sleeping')
 			data = dict(zip(keys, line))
 			message = str(data)
-			if data['crying'] or data['time_no_breathing'] >= 5:
-				message = 'NOTIFICATION: ' + message
+			
+			if data['crying']:
+				message = 'NOTIFICATION: Baby Emma is crying.' 
+				semaphore.acquire()
+				notif_confirm[0] = True
+				semaphore.release()
+
+			elif data['time_no_breathing'] >= 5:
+				message = f"NOTIFICATION: Baby Emma hasn't been breathing for {data['time_no_breathing']} seconds."
 				semaphore.acquire()
 				notif_confirm[0] = True
 				semaphore.release()

@@ -21,13 +21,16 @@ import itertools
 semaphore = threading.BoundedSemaphore()
 
 class Middleware(threading.Thread):
-    def __init__(self):
+    def __init__(self, is_adapted):
         threading.Thread.__init__(self)
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(host='localhost'))
         self.channel = self.connection.channel()
+        self.queue = 'middleware'
+        self.channel.queue_declare(self.queue)
         self.time_no_response = 0
         self.count = 0
+        self.is_adapted = is_adapted
 
     def get_bindings(self):
         client = Client('localhost:15672', 'guest', 'guest')
@@ -43,7 +46,7 @@ class Middleware(threading.Thread):
         for i in range(len(bindings)):
 
             self.channel.queue_bind(
-                exchange=bindings[i]['source'], queue=bindings[i]['destination'], routing_key=bindings[i]['routing_key'])
+                exchange=bindings[i]['source'], queue=self.queue, routing_key=bindings[i]['routing_key'])
 
         return bindings
         
@@ -62,26 +65,20 @@ class Middleware(threading.Thread):
         
         for i in range(len(bindings)):
             self.channel.basic_consume(
-                queue=bindings[i]['destination'], on_message_callback=callback, auto_ack=True, ("x-priority", 10))
+                queue=bindings[i]['destination'], on_message_callback=callback, auto_ack=True)
 
         self.channel.start_consuming()
     
     def read_message(self, message, bindings):
         global semaphore 
-        print('from reading message')
         if 'NOTIFICATION' in message:
-            data = message.replace('b"NOTIFICATION: ', '')
-            data = data.replace('"', '')
-            data = eval(data)
-            message = 'NOTIFICATION: ' + str(data)
             self.count += 1
-            print('count ', self.count)
             if self.count == 1:
                 self.time_no_response = time.time()
 
             else:
                 self.time_no_response = time.time() - self.time_no_response
-                print('Time No response: ', self.time_no_response)
+                print(f'* Time No response: {self.time_no_response} seconds.')
                 if self.time_no_response >= 5:
                     self.forward_message(message, bindings)
 
@@ -95,12 +92,16 @@ class Middleware(threading.Thread):
         if smart_tv_get_status():
             self.publish_message(message, bindings)
         else:
-            print('Stopping application')
-            smart_tv_stop_app()
-            self.publish_message(message, bindings)
-            time.sleep(2)
-            print('Reopening application')
-            smart_tv_start_app
+            if self.is_adapted:
+                print('### Executing adaptation...')
+                print('Stopping application')
+                smart_tv_stop_app()
+                self.publish_message(message, bindings)
+                time.sleep(2)
+                print('Reopening application')
+                smart_tv_start_app
+            else:
+                print('### Unable to forward to TV...')
 
     def publish_message(self, message, bindings):
         ex_rt = []
@@ -111,16 +112,16 @@ class Middleware(threading.Thread):
 
         for i in ex_rt:
             try:
-                print('Trying to send message to tv')
+                print('### Trying to send message to tv')
                 self.channel.basic_publish(exchange=i[0], routing_key=i[1], body=message)
                 self.count = 0
                 smartphone_confirm_notification()
-                print('Sending confirmation to monitor')
+                print('### Sending confirmation to monitor')
                 break
             except:
                 pass
 
-def main():
-    thread_middleware = Middleware()
+def main(is_adapted):
+    thread_middleware = Middleware(is_adapted)
     thread_middleware.start()
     
