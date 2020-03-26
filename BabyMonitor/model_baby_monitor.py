@@ -21,7 +21,7 @@ class BabyMonitorConsumer(threading.Thread):
         self.channel = self.connection.channel()
         self.bm = self.create_table_baby_monitor()
         self.button_is_pressed = False
-        declare_exchanges_queues(self.channel)
+        declare_exchanges_queues()
 
     def run(self):
         global semaphore, notif_confirm
@@ -96,7 +96,7 @@ class BabyMonitorProducer(threading.Thread):
         self.channel = self.connection.channel()
         self.bm = self.create_table_baby_monitor()
         self.button_is_pressed = False
-        declare_exchanges_queues(self.channel)
+        declare_exchanges_queues()
 
     def run(self):
         global semaphore, notif_confirm

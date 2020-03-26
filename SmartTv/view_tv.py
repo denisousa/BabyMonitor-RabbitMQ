@@ -6,6 +6,7 @@ import sys
 import threading
 sys.path.append('../')
 
+
 class Window(QMainWindow):
     def __init__(self):
         super().__init__()

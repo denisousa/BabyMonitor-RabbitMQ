@@ -3,7 +3,6 @@ import pika
 import sys
 import random
 sys.path.append('../')
-from construct_scenario import queue_smart_tv, routing_key_smart_tv, exchange_baby_monitor
 from model_smart_tv import Smart_TV
 import threading
 

@@ -22,7 +22,7 @@ class Smartphone(threading.Thread):
 
 		self.button_is_pressed = False
 		self.is_notification = False
-		declare_exchanges_queues(self.channel)
+		declare_exchanges_queues()
 
 	def run(self):
 		if self.is_consumer:
