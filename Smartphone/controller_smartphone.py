@@ -2,17 +2,16 @@
 import pika
 import sys
 sys.path.append('../')
-from model_smartphone import Smartphone
+from model_smartphone import SmartphoneConsumer, SmartphoneProducer
 
-smartphone_consumer = Smartphone()
+smartphone_consumer = SmartphoneConsumer()
+smartphone_producer = SmartphoneProducer()
 
 #start conection
 def smartphone_start():
-	global smartphone_producer, smartphone_consumer
-
-	smartphone_consumer.is_consumer = True
+	global smartphone_producer
 	smartphone_consumer.button_is_pressed = True
-	smartphone_consumer.start()
+	smartphone_consumer.start_connection()
 	
 #stop conection
 def smartphone_stop():
@@ -28,10 +27,8 @@ def smartphone_get_data():
 def smartphone_confirm_notification():
 	global smartphone_producer
 
-	smartphone_producer = Smartphone()
 	smartphone_producer.button_is_pressed = True
-	smartphone_producer.is_producer = True
-	smartphone_producer.start()
+	smartphone_producer.start_connection()
 	'''if smartphone_consumer.is_notification:
 		smartphone_consumer.is_notification = False
 		smartphone_producer.button_is_pressed = True'''

@@ -9,47 +9,37 @@ import sqlalchemy as db
 import threading
 
 
-class Smartphone(threading.Thread):
+class SmartphoneConsumer():
+		
 	def __init__(self):
-		threading.Thread.__init__(self)
 		self.engine = engine
 		self.meta = meta
 		self.connection = pika.BlockingConnection(
 			pika.ConnectionParameters(host='localhost'))
 		self.channel = self.connection.channel()
-		self.is_producer = False
-		self.is_consumer = False
-
+		self.channel.exchange_declare(exchange=exchange_baby_monitor, exchange_type="topic")
+		self.channel.queue_declare(queue_smartphone)
+		self.channel.queue_bind(
+				exchange=exchange_baby_monitor, queue=queue_smartphone, routing_key=routing_key_smartphone)
+		
 		self.button_is_pressed = False
 		self.is_notification = False
-		declare_exchanges_queues(self.channel)
 
-	def run(self):
-		if self.is_consumer:
-			while self.button_is_pressed:
-				print(' [*] Smartphone waiting for messages. To exit press CTRL+C')
+	def start_connection(self):
+		if self.button_is_pressed:
+			print(' [*] Smartphone waiting for messages. To exit press CTRL+C')
 
-				def callback_smartphone(ch, method, properties, body):
-					if method.routing_key == routing_key_smartphone:
-						print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
-						self.read_message(body)
-
-				self.channel.queue_bind(
-					exchange=exchange_baby_monitor, queue=queue_smartphone, routing_key=routing_key_smartphone)
+			def callback_smartphone(ch, method, properties, body):
 				
-				self.channel.basic_consume(
-							queue=queue_smartphone, on_message_callback=callback_smartphone, auto_ack=True)
-
-				self.channel.start_consuming()
+				print(" [x] Receive Topic: %r | Message: %r" % (method.routing_key, body))
+				self.read_message(body)
 			
-			self.connection.close()
+			self.channel.basic_consume(
+						queue=queue_smartphone, on_message_callback=callback_smartphone, auto_ack=True)
 
-		if self.is_producer and self.button_is_pressed:
-			message = 'CONFIRMATION: Notification received!'
-			self.channel.basic_publish(exchange=exchange_baby_monitor, routing_key=routing_key_baby_monitor, body=message)
-			self.is_notification = False
-			print(" [x] Sent Topic: %r | Message: %r" % (routing_key_baby_monitor, message))
-			self.button_is_pressed = False
+			self.channel.start_consuming()
+		
+			self.connection.close()
 
 	def read_message(self, message):
 		message = str(message)
@@ -77,3 +67,18 @@ class Smartphone(threading.Thread):
 			return result[-1]
 		else: 
 			return 0 
+
+class SmartphoneProducer():
+	def __init__(self):
+		self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+		self.channel = self.connection.channel()
+		self.channel.exchange_declare(exchange=exchange_baby_monitor, exchange_type="topic")
+		self.button_is_pressed = False
+
+	def start_connection(self):
+		while self.button_is_pressed:
+			message = 'CONFIRMATION: Notification received!'
+			self.channel.basic_publish(exchange=exchange_baby_monitor, routing_key=routing_key_baby_monitor, body=message)
+			self.is_notification = False
+			print(" [x] Sent Topic: %r | Message: %r" % (routing_key_baby_monitor, message))
+			self.button_is_pressed = False

@@ -26,7 +26,7 @@ class Window(QMainWindow):
         thread_status.start()
         self.button = True
         self.start_thread = True
-        start()
+        smartphone_start()
         self.connection.setText('<strong>Open connection<\strong>')
         self.connection.setFont(QtGui.QFont('Arial', 14))
         self.connection.adjustSize()
@@ -35,7 +35,7 @@ class Window(QMainWindow):
     def button_pressed_stop(self):
         self.button = False
         self.start_thread = False
-        stop()
+        smartphone_stop()
         self.connection.setText('<strong>Closed connection<\strong>')
         self.connection.setFont(QtGui.QFont('Arial', 14))
         self.connection.adjustSize()
@@ -43,7 +43,7 @@ class Window(QMainWindow):
 
     def button_pressed_confirm(self):
         confirm_notification()
-        data = get_data()
+        data = smartphone_get_data()
         self.button_confirm.setEnabled(False)
         self.alert.setText("")
         smartphone_consumer.is_notification = False
@@ -58,7 +58,7 @@ class Window(QMainWindow):
                 self.show_message_data()
 
     def show_message_data(self):
-        data = get_data()
+        data = smartphone_get_data()
         self.send_breathing.setText('Breathing: {}'.format(data['breathing']))
         self.send_breathing.setFont(QtGui.QFont('Arial', 12)) 
         self.send_breathing.adjustSize()

@@ -17,8 +17,8 @@ def baby_monitor_start():
     monitor_producer.button_is_pressed = True
     monitor_consumer.button_is_pressed = True
     
-    monitor_producer.start()      
-    monitor_consumer.start()
+    monitor_producer.start_connection()      
+    monitor_consumer.start_connection()
 
 #stop conection
 def baby_monitor_stop():
