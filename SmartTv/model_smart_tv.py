@@ -13,7 +13,7 @@ class Smart_TV(threading.Thread):
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         self.channel = self.connection.channel()
         self.channel.exchange_declare(exchange=exchange_baby_monitor, exchange_type="direct")
-        self.queue = self.channel.queue_declare(queue_smart_tv, arguments={'x-max-priority': 10})
+        self.queue = self.channel.queue_declare(queue_smart_tv)
         self.channel.queue_bind(
             exchange=exchange_baby_monitor, queue=queue_smart_tv, routing_key=routing_key_smart_tv)
 
@@ -27,14 +27,14 @@ class Smart_TV(threading.Thread):
         while self.button_is_pressed:
             print(' [*] Smart Tv waiting for messages. To exit press CTRL+C')
 
-            if self.status:
+            '''if self.status:
                 print('TV is unlocked.')
 
             else:
-                print('TV is locked')
+                print('TV is locked')'''
 
             def callback_smart_tv(ch, method, properties, body):
-                print(" [SmartTv] Receive Topic: %r | Message: %r" % (method.routing_key, body))
+                #print(" [SmartTv] Receive Topic: %r | Message: %r" % (method.routing_key, body))
                 self.message = str(body).replace('b"', '')
                 self.message = self.message.replace('"', '')
             

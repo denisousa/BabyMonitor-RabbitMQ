@@ -11,16 +11,13 @@ class SmartphoneConsumer(threading.Thread):
 		
 	def __init__(self):
 		threading.Thread.__init__(self)
-		#pika.spec.BasicProperties(content_type=None, content_encoding=None, headers=None, delivery_mode=None, priority=3, correlation_id=None, reply_to=None, expiration=None, message_id=None, timestamp=None, type=None, user_id=None, app_id=None, cluster_id=None)
 		self.engine = engine
 		self.meta = meta
 		self.connection = pika.BlockingConnection(
 			pika.ConnectionParameters(host='localhost'))
 		self.channel = self.connection.channel()
 		self.channel.exchange_declare(exchange=exchange_baby_monitor, exchange_type="direct")
-		'''data = dict()
-		data['x-max-priority'] = 10'''
-		self.channel.queue_declare(queue_smartphone, arguments={'x-max-priority': 10})
+		self.channel.queue_declare(queue_smartphone)
 		self.channel.queue_bind(
 				exchange=exchange_baby_monitor, queue=queue_smartphone, routing_key=routing_key_smartphone)
 		self.message = ''
@@ -62,4 +59,4 @@ class SmartphoneProducer(threading.Thread):
 	def run(self):
 		message = 'CONFIRMATION: Notification received!'
 		self.channel.basic_publish(exchange=exchange_baby_monitor, routing_key=routing_key_baby_monitor, body=message)
-		print(" [Smartphone] Sent Topic: %r | Message: %r \n" % (routing_key_baby_monitor, message))
+		#print(" [Smartphone] Sent Topic: %r | Message: %r \n" % (routing_key_baby_monitor, message))

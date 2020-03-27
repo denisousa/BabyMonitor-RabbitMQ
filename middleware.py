@@ -54,16 +54,14 @@ class Middleware(threading.Thread):
     def run(self):
         
         bindings = self.subscribe_in_all_queues()
-        time.sleep(2)
         def callback(ch, method, properties, body):
             print("[MIDDLEWARE] Receive Topic: %r | Message: %r" % (method.routing_key, body))
             if 'tv' in str(method.routing_key):
                 self.time_no_response = 0
-                #print('### TV successfully received the message.')
+                print('### TV successfully received the message.')
             
             else:
                 self.read_message(str(body), bindings)
-
 
             time.sleep(0.5)
         
@@ -76,7 +74,7 @@ class Middleware(threading.Thread):
         global semaphore, init
         if 'NOTIFICATION' in message:
             self.time_no_response += 1
-            #print(f'* Time No response: {int(self.time_no_response)} seconds.')
+            print(f'* Time No response: {int(self.time_no_response)} seconds.')
             if self.time_no_response >= 5:
                 self.forward_message(message, bindings)
 

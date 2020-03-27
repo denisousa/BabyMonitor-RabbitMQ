@@ -34,7 +34,6 @@ def smartphone_get_message():
 	global smartphone_consumer
 
 	message = smartphone_consumer.message
-	#print(smartphone_consumer.message)
 	if '{' in message:
 		return eval(message)
 

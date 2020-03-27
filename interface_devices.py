@@ -119,7 +119,6 @@ class Window(QMainWindow):
         self.button_confirm.setEnabled(False)
         sleep(1)
 
-
         '''self.alert.setText("")
         smartphone_consumer.is_notification = False
         self.message_confirm.setText("Notification Confirmed")
@@ -180,7 +179,6 @@ class Window(QMainWindow):
         
         while self.button_smp:
             data = smartphone_get_message()
-            print('Data received: ', data)
             if isinstance(data, dict):
                 self.receive_breathing_smp.setText('Breathing: {}'.format(data['breathing']))
                 self.receive_breathing_smp.setFont(QtGui.QFont('Arial', 12)) 

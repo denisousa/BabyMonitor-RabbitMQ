@@ -37,11 +37,10 @@ class BabyMonitorConsumer(threading.Thread):
 			def callback_baby_monitor(ch, method, properties, body):
 				
 				if notif_confirm[0]:
-					print(" [BabyMonitor] Receive Topic: %r | Message: %r \n" % (method.routing_key, body))
+					#print(" [BabyMonitor] Receive Topic: %r | Message: %r \n" % (method.routing_key, body))
 					semaphore.acquire()
 					notif_confirm[1] = True
 					semaphore.release()
-					print(f'notif_confirm {notif_confirm}')
 
 			self.channel.basic_consume(
 				queue=queue_baby_monitor, on_message_callback=callback_baby_monitor, auto_ack=True)
@@ -68,21 +67,17 @@ class BabyMonitorProducer(threading.Thread):
 		global semaphore, notif_confirm
 
 		while self.button_is_pressed:
-			print(f'notif_confirm {notif_confirm}')
 			if notif_confirm[0]:
 				if notif_confirm[1]:
 					data_from_baby(self, -1)
-					print('Dados bons')
 					semaphore.acquire()
 					notif_confirm[0] = False
 					notif_confirm[1] = False
 					semaphore.release()
 				else: 
 					data_from_baby(self, 1)
-					print('mantem os dados')
 			else: 
 				data_from_baby(self, 0)
-				print('dados novos')
 
 			self.data = self.get_data_baby_monitor()
 			keys = ('id', 'breathing', 'time_no_breathing', 'crying', 'sleeping')
@@ -106,7 +101,7 @@ class BabyMonitorProducer(threading.Thread):
 
 			self.channel.basic_publish(exchange=exchange_baby_monitor, routing_key=routing_key_smartphone, body=message)
 
-			print(" [BabyMonitor] Sent Topic: %r | Message: %r \n" % (routing_key_smartphone, message))
+			#print(" [BabyMonitor] Sent Topic: %r | Message: %r \n" % (routing_key_smartphone, message))
 			sleep(1)
 
 	def create_table_baby_monitor(self):
