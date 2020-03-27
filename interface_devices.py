@@ -42,6 +42,7 @@ class Window(QMainWindow):
     def start_middleware(self):
         main(self.is_adapted)
 
+
     def button_pressed_start(self, device):
         global position_x_bm, position_x_smp, position_x_smtv
         
@@ -103,7 +104,7 @@ class Window(QMainWindow):
             self.connection_smtv.setText('<strong>Closed connection Smart TV<\strong>')
             self.connection_smtv.setFont(QtGui.QFont('Arial', 12))
             self.connection_smtv.adjustSize()
-            self.connection_smtv.move(position_x_smtv, 550)
+            self.connection_smtv.move(position_x_smtfv, 550)
 
     def button_pressed_start_app(self, device):
         smart_tv_start_app()
@@ -116,6 +117,8 @@ class Window(QMainWindow):
         data = baby_monitor_get_data()
         self.button_smp_confirm = True
         self.button_confirm.setEnabled(False)
+        sleep(1)
+
 
         '''self.alert.setText("")
         smartphone_consumer.is_notification = False
@@ -177,8 +180,8 @@ class Window(QMainWindow):
         
         while self.button_smp:
             data = smartphone_get_message()
+            print('Data received: ', data)
             if isinstance(data, dict):
-                print('I am a normal message')
                 self.receive_breathing_smp.setText('Breathing: {}'.format(data['breathing']))
                 self.receive_breathing_smp.setFont(QtGui.QFont('Arial', 12)) 
                 self.receive_breathing_smp.adjustSize()
@@ -208,8 +211,8 @@ class Window(QMainWindow):
                 self.notification.setWordWrap(False)
                 self.notification.adjustSize()
 
-                self.send_confirmation_smp("")
-
+                self.send_confirmation_smp.setText("")
+                self.button_smp_confirm = False
                 #self.button_confirm.setEnabled(False)
 
             else:
@@ -231,7 +234,6 @@ class Window(QMainWindow):
                 self.send_confirmation_smp.setFont(QtGui.QFont('Arial', 12)) 
                 self.send_confirmation_smp.adjustSize() 
                 self.send_confirmation_smp.move(position_x_smp, 240)
-                sleep(1)
             else:
                 self.send_confirmation_smp.setText('')
 
@@ -273,7 +275,7 @@ class Window(QMainWindow):
             
             self.receive_message_smtv.setFixedWidth(150)
             self.receive_message_smtv.setWordWrap(True)
-            self.receive_message_smtv.setText('')
+
             self.receive_message_smtv.setFont(QtGui.QFont('Arial', 12)) 
             self.receive_message_smtv.adjustSize()
             self.receive_message_smtv.move(position_x_smtv, 370)
@@ -411,3 +413,9 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     ex = Window()
     sys.exit(app.exec_())
+
+
+'''
+
+Channel channel = ...; Consumer consumer = ...; Map<String, Object> args = new HashMap<String, Object>(); args.put("x-priority", 10); channel.basicConsume("my-queue", false, args, consumer);
+'''

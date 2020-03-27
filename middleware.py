@@ -30,16 +30,24 @@ class Middleware(threading.Thread):
         client = Client('localhost:15672', 'guest', 'guest')
         bindings = client.get_bindings()
         bindings = bindings[4:]
+        #print(bindings)
 
         return bindings
 
     def subscribe_in_all_queues(self):
         
         bindings = self.get_bindings()
+        routes = set()
+        exchanges = set()
+
         for i in range(len(bindings)):
             if not 'baby_monitor' in bindings[i]['routing_key']:
+                routes.add(bindings[i]['routing_key'])
+
+        for route in routes:
+            if not 'baby_monitor' in routes:
                 self.channel.queue_bind(
-                    exchange=bindings[i]['source'], queue=self.queue, routing_key=bindings[i]['routing_key'])
+                    exchange='exchange_baby_monitor', queue=self.queue, routing_key=route)
 
         return bindings
         
@@ -51,32 +59,26 @@ class Middleware(threading.Thread):
             print("[MIDDLEWARE] Receive Topic: %r | Message: %r" % (method.routing_key, body))
             if 'tv' in str(method.routing_key):
                 self.time_no_response = 0
-                print('### TV successfully received the message.')
+                #print('### TV successfully received the message.')
             
             else:
                 self.read_message(str(body), bindings)
+
+
+            time.sleep(0.5)
         
-        for i in range(len(bindings)):
-            if not 'baby_monitor' in bindings[i]['destination']:
-                self.channel.basic_consume(
-                    queue=bindings[i]['destination'], on_message_callback=callback, auto_ack=True)
+            self.channel.basic_consume(
+                queue=self.queue, on_message_callback=callback, auto_ack=True)
 
         self.channel.start_consuming()
     
     def read_message(self, message, bindings):
         global semaphore, init
         if 'NOTIFICATION' in message:
-
-            self.count += 1
-            
-            if self.count == 1:
-                init = time.time()
-
-            else:
-                self.time_no_response = time.time() - init
-                print(f'* Time No response: {int(self.time_no_response)} seconds.')
-                if self.time_no_response >= 5:
-                    self.forward_message(message, bindings)
+            self.time_no_response += 1
+            #print(f'* Time No response: {int(self.time_no_response)} seconds.')
+            if self.time_no_response >= 5:
+                self.forward_message(message, bindings)
 
         if 'STATUS' in message:
             self.count = 0 
@@ -95,6 +97,7 @@ class Middleware(threading.Thread):
                 print('\tReopening application\n')
                 smart_tv_start_app()
             else:
+                pass
                 print('### Unable to forward to TV...')
 
     def publish_message(self, message, bindings):
@@ -118,3 +121,7 @@ class Middleware(threading.Thread):
 def main(is_adapted):
     thread_middleware = Middleware(is_adapted)
     thread_middleware.start()
+
+
+if __name__ == '__main__':
+    main(True)

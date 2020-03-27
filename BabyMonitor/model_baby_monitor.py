@@ -106,7 +106,7 @@ class BabyMonitorProducer(threading.Thread):
 
 			self.channel.basic_publish(exchange=exchange_baby_monitor, routing_key=routing_key_smartphone, body=message)
 
-			#print(" [BabyMonitor] Sent Topic: %r | Message: %r \n" % (routing_key_smartphone, message))
+			print(" [BabyMonitor] Sent Topic: %r | Message: %r \n" % (routing_key_smartphone, message))
 			sleep(1)
 
 	def create_table_baby_monitor(self):

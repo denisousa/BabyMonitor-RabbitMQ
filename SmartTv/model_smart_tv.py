@@ -13,7 +13,7 @@ class Smart_TV(threading.Thread):
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         self.channel = self.connection.channel()
         self.channel.exchange_declare(exchange=exchange_baby_monitor, exchange_type="direct")
-        self.queue = self.channel.queue_declare(queue_smart_tv)
+        self.queue = self.channel.queue_declare(queue_smart_tv, arguments={'x-max-priority': 10})
         self.channel.queue_bind(
             exchange=exchange_baby_monitor, queue=queue_smart_tv, routing_key=routing_key_smart_tv)
 
