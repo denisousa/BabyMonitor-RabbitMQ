@@ -12,7 +12,7 @@ class Smart_TV(threading.Thread):
         
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         self.channel = self.connection.channel()
-        self.channel.exchange_declare(exchange=exchange_baby_monitor, exchange_type="topic")
+        self.channel.exchange_declare(exchange=exchange_baby_monitor, exchange_type="direct")
         self.queue = self.channel.queue_declare(queue_smart_tv)
         self.channel.queue_bind(
             exchange=exchange_baby_monitor, queue=queue_smart_tv, routing_key=routing_key_smart_tv)
@@ -24,7 +24,7 @@ class Smart_TV(threading.Thread):
         self.message = ''
 
     def run(self):
-        if self.button_is_pressed:
+        while self.button_is_pressed:
             print(' [*] Smart Tv waiting for messages. To exit press CTRL+C')
 
             if self.status:
@@ -45,8 +45,8 @@ class Smart_TV(threading.Thread):
                 if self.queue.method.message_count == 0:
                     self.message = ''
 
-            self.channel.start_consuming()
-            self.connection.close()
+                self.channel.start_consuming()
+        self.connection.close()
 
     def aplication_func(self):
         while self.application:

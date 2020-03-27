@@ -31,7 +31,7 @@ def baby_monitor_stop():
 def baby_monitor_get_data():
     global monitor_producer
 
-    return monitor_producer.get_data_baby_monitor()
+    return monitor_producer.data
 
 def baby_monitor_get_confirmation():
     if notif_confirm[0]:

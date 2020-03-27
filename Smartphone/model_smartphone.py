@@ -15,7 +15,7 @@ class SmartphoneConsumer(threading.Thread):
 		self.connection = pika.BlockingConnection(
 			pika.ConnectionParameters(host='localhost'))
 		self.channel = self.connection.channel()
-		self.channel.exchange_declare(exchange=exchange_baby_monitor, exchange_type="topic")
+		self.channel.exchange_declare(exchange=exchange_baby_monitor, exchange_type="direct")
 		self.channel.queue_declare(queue_smartphone)
 		self.channel.queue_bind(
 				exchange=exchange_baby_monitor, queue=queue_smartphone, routing_key=routing_key_smartphone)
@@ -35,7 +35,8 @@ class SmartphoneConsumer(threading.Thread):
 					self.is_notification = True
 					self.message = str(body)
 				else: 
-					print("Everything's fine. :)")
+					#print("Everything's fine. :)")
+					self.is_notification = False
 					self.message = str(body).replace('b"STATUS: ', '')
 					self.message = self.message.replace('"', '')
 			
@@ -51,13 +52,10 @@ class SmartphoneProducer(threading.Thread):
 		threading.Thread.__init__(self)
 		self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
 		self.channel = self.connection.channel()
-		self.channel.exchange_declare(exchange=exchange_baby_monitor, exchange_type="topic")
+		self.channel.exchange_declare(exchange=exchange_baby_monitor, exchange_type="direct")
 		self.button_is_pressed = False
 
 	def run(self):
-		while self.button_is_pressed:
-			message = 'CONFIRMATION: Notification received!'
-			self.channel.basic_publish(exchange=exchange_baby_monitor, routing_key=routing_key_baby_monitor, body=message)
-			self.is_notification = False
-			print(" [Smartphone] Sent Topic: %r | Message: %r \n" % (routing_key_baby_monitor, message))
-			self.button_is_pressed = False
+		message = 'CONFIRMATION: Notification received!'
+		self.channel.basic_publish(exchange=exchange_baby_monitor, routing_key=routing_key_baby_monitor, body=message)
+		print(" [Smartphone] Sent Topic: %r | Message: %r \n" % (routing_key_baby_monitor, message))
