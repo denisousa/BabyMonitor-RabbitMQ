@@ -33,6 +33,9 @@ class Smart_TV(threading.Thread):
             else:
                 print('TV is locked')'''
 
+            if self.queue.method.message_count == 0:
+                self.message = ''
+
             def callback_smart_tv(ch, method, properties, body):
                 #print(" [SmartTv] Receive Topic: %r | Message: %r" % (method.routing_key, body))
                 self.message = str(body).replace('b"', '')
@@ -41,9 +44,6 @@ class Smart_TV(threading.Thread):
             if self.status:
                 self.channel.basic_consume(
                     queue=queue_smart_tv, on_message_callback=callback_smart_tv, auto_ack=True)
-
-                if self.queue.method.message_count == 0:
-                    self.message = ''
 
                 self.channel.start_consuming()
         self.connection.close()

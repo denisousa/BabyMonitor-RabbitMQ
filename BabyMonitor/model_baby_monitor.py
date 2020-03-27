@@ -32,7 +32,7 @@ class BabyMonitorConsumer(threading.Thread):
 
 		print("thread que recebeu: ", threading.get_ident())
 		while self.button_is_pressed:
-			print(' [*] BabyMonitor waiting for messages. To exit press CTRL+C')
+			#print(' [*] BabyMonitor waiting for messages. To exit press CTRL+C')
 
 			def callback_baby_monitor(ch, method, properties, body):
 				

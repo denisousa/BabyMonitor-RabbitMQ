@@ -11,8 +11,15 @@ from pyrabbit.api import Client
 import time
 import itertools
 
+
+# Se insrever em todos os tópicos - OK
+# Receber todas as mensagens dos tópicos - OK
+# Mensagem tipo notificação, começa a contar tempo
+# Quando tempo alcança x, ele tenta enviar a msg que recebeu pra tv (get_Status)
+# Se TV bloqueada, stop application, envia notificação e start application.
+
 semaphore = threading.BoundedSemaphore()
-init = 0
+bindings = None
 
 class Middleware(threading.Thread):
     def __init__(self, is_adapted):
@@ -30,72 +37,63 @@ class Middleware(threading.Thread):
         client = Client('localhost:15672', 'guest', 'guest')
         bindings = client.get_bindings()
         bindings = bindings[4:]
-        #print(bindings)
 
         return bindings
 
     def subscribe_in_all_queues(self):
         
         bindings = self.get_bindings()
-        routes = set()
-        exchanges = set()
-
+        
         for i in range(len(bindings)):
-            if not 'baby_monitor' in bindings[i]['routing_key']:
-                routes.add(bindings[i]['routing_key'])
-
-        for route in routes:
-            if not 'baby_monitor' in routes:
+            if 'monitor' not in bindings[i]['routing_key']:
                 self.channel.queue_bind(
-                    exchange='exchange_baby_monitor', queue=self.queue, routing_key=route)
+                    exchange=bindings[i]['source'], queue=self.queue, routing_key=bindings[i]['routing_key'])
 
         return bindings
         
     def run(self):
-        
-        bindings = self.subscribe_in_all_queues()
+    
         def callback(ch, method, properties, body):
-            print("[MIDDLEWARE] Receive Topic: %r | Message: %r" % (method.routing_key, body))
+            print(" [MIDDLEWARE] Receive Topic: %r | Message: %r" % (method.routing_key, body))
             if 'tv' in str(method.routing_key):
                 self.time_no_response = 0
-                print('### TV successfully received the message.')
+                print('TV successfully received the message.')
             
             else:
                 self.read_message(str(body), bindings)
-
-            time.sleep(0.5)
         
-            self.channel.basic_consume(
-                queue=self.queue, on_message_callback=callback, auto_ack=True)
+        self.channel.basic_consume(
+            queue=self.queue, on_message_callback=callback, auto_ack=True)
 
         self.channel.start_consuming()
     
     def read_message(self, message, bindings):
-        global semaphore, init
+        global semaphore 
         if 'NOTIFICATION' in message:
-            self.time_no_response += 1
-            print(f'* Time No response: {int(self.time_no_response)} seconds.')
-            if self.time_no_response >= 5:
+            self.time_no_response += 2
+            print(f'* Time No response: {self.time_no_response} seconds.')
+            if self.time_no_response >= 3:
                 self.forward_message(message, bindings)
 
         if 'STATUS' in message:
-            self.count = 0 
-            self.time_no_response = 0 
+            semaphore.acquire()
+            self.time_no_response = 0
+            semaphore.release() 
 
     def forward_message(self, message, bindings):
+        print('Status da tv: ', smart_tv_get_status())
         if smart_tv_get_status():
             self.publish_message(message, bindings)
         else:
             if self.is_adapted:
-                print('\n### Executing adaptation...')
-                print('\tStopping application')
+                print('### Executing adaptation...')
+                print('Stopping application')
                 smart_tv_stop_app()
                 self.publish_message(message, bindings)
                 time.sleep(2)
-                print('\tReopening application\n')
+                print('Reopening application')
                 smart_tv_start_app()
             else:
-                pass
                 print('### Unable to forward to TV...')
 
     def publish_message(self, message, bindings):
@@ -107,19 +105,18 @@ class Middleware(threading.Thread):
 
         for i in ex_rt:
             try:
-                print('\n### Trying to send message to tv...')
+                print('### Trying to send message to tv')
                 self.channel.basic_publish(exchange=i[0], routing_key=i[1], body=message)
                 self.count = 0
                 smartphone_confirm_notification()
-                print('### Sending confirmation to monitor...\n')
+                print('### Sending confirmation to monitor')
                 break
             except:
                 pass
 
 def main(is_adapted):
+    global bindings 
+
     thread_middleware = Middleware(is_adapted)
+    bindings = thread_middleware.subscribe_in_all_queues()
     thread_middleware.start()
-
-
-if __name__ == '__main__':
-    main(True)
