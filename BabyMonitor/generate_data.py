@@ -9,7 +9,7 @@ crying = False
 sleeping = True
 breathing = True
 time_no_breathing = 0
-max_no_changes = random.randint(5,10)
+max_no_changes = random.randint(3,7)
 
 #flag = -1: bebê está bem
 #flag = 0: status novo
@@ -23,7 +23,7 @@ def count(function):
 
         if flag == -1: 
             wrapped.calls = 0
-            max_no_changes = random.randint(5, 10)
+            max_no_changes = random.randint(3,7)
             return function(-1, monitor)
 
         if flag == 0: 

@@ -30,14 +30,14 @@ class BabyMonitorConsumer(threading.Thread):
 	def run(self):
 		global semaphore, notif_confirm
 
-		print("thread que recebeu: ", threading.get_ident())
+		#print("thread que recebeu: ", threading.get_ident())
 		while self.button_is_pressed:
-			#print(' [*] BabyMonitor waiting for messages. To exit press CTRL+C')
+			print(' [*] BabyMonitor waiting for messages. To exit press CTRL+C')
 
 			def callback_baby_monitor(ch, method, properties, body):
 				
 				if notif_confirm[0]:
-					#print(" [BabyMonitor] Receive Topic: %r | Message: %r \n" % (method.routing_key, body))
+					print(" [BabyMonitor] Receive Topic: %r | Message: %r \n" % (method.routing_key, body))
 					semaphore.acquire()
 					notif_confirm[1] = True
 					semaphore.release()
@@ -62,6 +62,8 @@ class BabyMonitorProducer(threading.Thread):
 		self.data = None
 		self.bm = self.create_table_baby_monitor()
 		self.button_is_pressed = False
+
+		self.message = None
 
 	def run(self):
 		global semaphore, notif_confirm
@@ -90,7 +92,7 @@ class BabyMonitorProducer(threading.Thread):
 				notif_confirm[0] = True
 				semaphore.release()
 
-			elif data['time_no_breathing'] >= 5:
+			elif data['time_no_breathing'] >= 3:
 				message = f"NOTIFICATION: Baby Emma hasn't been breathing for {data['time_no_breathing']} seconds."
 				semaphore.acquire()
 				notif_confirm[0] = True
@@ -101,7 +103,9 @@ class BabyMonitorProducer(threading.Thread):
 
 			self.channel.basic_publish(exchange=exchange_baby_monitor, routing_key=routing_key_smartphone, body=message)
 
-			#print(" [BabyMonitor] Sent Topic: %r | Message: %r \n" % (routing_key_smartphone, message))
+			print(" [BabyMonitor] Sent Topic: %r | Message: %r \n" % (routing_key_smartphone, message))
+			
+			self.message = message
 			sleep(1)
 
 	def create_table_baby_monitor(self):

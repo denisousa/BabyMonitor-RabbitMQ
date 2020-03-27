@@ -4,6 +4,7 @@ import sys
 sys.path.append('../')
 from model_smartphone import SmartphoneConsumer, SmartphoneProducer
 import textwrap
+import threading
 
 smartphone_consumer = SmartphoneConsumer()
 
@@ -13,10 +14,12 @@ def smartphone_start():
 	smartphone_consumer.button_is_pressed = True
 	smartphone_consumer.start()
 	
+	
 #stop conection
 def smartphone_stop():
 	global smartphone_consumer
 	smartphone_consumer.button_is_pressed = False
+	smartphone_consumer.join()
 
 def smartphone_confirm_notification():
 	global smartphone_consumer
@@ -25,6 +28,7 @@ def smartphone_confirm_notification():
 	smartphone_consumer.is_notification = False
 	smartphone_producer = SmartphoneProducer()
 	smartphone_producer.start()
+	smartphone_producer.join()
 
 def smartphone_get_notification():
 	global smartphone_consumer

@@ -30,6 +30,7 @@ def smart_tv_stop_app():
 
     smart_tv.application = False
     smart_tv.status = True
+    smart_tv.join()
     
 def smart_tv_get_status():
     global smart_tv
@@ -45,3 +46,8 @@ def smart_tv_get_message():
     global smart_tv
 
     return smart_tv.message
+
+def smart_tv_is_on():
+    global smart_tv
+
+    return smart_tv.isAlive()
