@@ -28,8 +28,8 @@ def baby_monitor_stop():
 
     monitor_producer.button_is_pressed = False
     monitor_consumer.button_is_pressed = False
-    monitor_consumer.join()
-    monitor_producer.join()
+    #monitor_consumer.join()
+    #monitor_producer.join()
 
 #get data from db
 def baby_monitor_get_data():

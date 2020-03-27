@@ -17,7 +17,8 @@ bindings = None
 time_no_response = 0
 init = 0
 count = 0
-
+event = threading.Event()
+    
 class Middleware(threading.Thread):
     def __init__(self, is_adapted):
         threading.Thread.__init__(self)
@@ -78,7 +79,7 @@ class Middleware(threading.Thread):
                 time_no_response = time.time() - init
 
             print(f'* Time No response: {time_no_response} seconds.')
-            if time_no_response >= 5:
+            if time_no_response >= 3:
                 self.forward_message(message, bindings)
 
         if 'STATUS' in message:
@@ -99,9 +100,9 @@ class Middleware(threading.Thread):
                     print('Stopping application')
                     smart_tv_stop_app()
                     self.publish_message(message, bindings)
-                    time.sleep(5)
-                    smart_tv_start_app()
-                    print('Reopening application')
+                    #time.sleep(5)
+                    '''smart_tv_start_app()
+                    print('Reopening application')'''
                 else:
                     print('### Unable to forward to TV...')
         else:
@@ -121,8 +122,13 @@ class Middleware(threading.Thread):
                 self.count = 0
                 smartphone_confirm_notification()
                 print('### Sending confirmation to monitor')
-                break
+                if self.is_adapted: 
+                    time.sleep(5)
+                    smart_tv_start_app()
+                    print('Reopening application')
+                return
             except:
+                print('Except publish...')
                 pass
 
 def main(is_adapted):

@@ -27,7 +27,10 @@ class Smart_TV(threading.Thread):
     def run(self):
         while self.button_is_pressed:
             print(' [*] Smart Tv waiting for messages. To exit press CTRL+C')
-
+            if self.application: 
+                self.status = False
+            else: 
+                self.status = True
             '''if self.status:
                 print('TV is unlocked.')
 
@@ -54,3 +57,4 @@ class Smart_TV(threading.Thread):
     def aplication_func(self):
         while self.application:
             self.status = False
+        self.status = True

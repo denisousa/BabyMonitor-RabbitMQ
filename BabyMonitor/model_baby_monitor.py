@@ -106,7 +106,7 @@ class BabyMonitorProducer(threading.Thread):
 			print(" [BabyMonitor] Sent Topic: %r | Message: %r \n" % (routing_key_smartphone, message))
 			
 			self.message = message
-			sleep(1)
+			#sleep(1)
 
 	def create_table_baby_monitor(self):
 		try:

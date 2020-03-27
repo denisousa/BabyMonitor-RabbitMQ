@@ -24,13 +24,17 @@ def smart_tv_start_app():
     smart_tv.application = True
     smart_tv.application_thread = threading.Thread(target=smart_tv.aplication_func, args=())
     smart_tv.application_thread.start()
+    
+    if smart_tv.application_thread.isAlive():
+        return 1
+    return 0
 
 def smart_tv_stop_app():
     global smart_tv
 
     smart_tv.application = False
     smart_tv.status = True
-    smart_tv.join()
+    #smart_tv.join()
     
 def smart_tv_get_status():
     global smart_tv

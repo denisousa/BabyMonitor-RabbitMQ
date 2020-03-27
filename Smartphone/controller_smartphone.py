@@ -19,7 +19,7 @@ def smartphone_start():
 def smartphone_stop():
 	global smartphone_consumer
 	smartphone_consumer.button_is_pressed = False
-	smartphone_consumer.join()
+	#smartphone_consumer.join()
 
 def smartphone_confirm_notification():
 	global smartphone_consumer
