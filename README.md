@@ -24,7 +24,7 @@ source <nome_da_virtualenv>/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2.1 - Python problem with install PyQt5?
+### 2.1 - Problem installing PyQt5?
 Try:
 ```
 pip install --upgrade pip
@@ -32,7 +32,7 @@ pip install PyQt5
 ```
 Or try this link: https://stackoverflow.com/questions/59711301/install-pyqt5-5-14-1-on-linu
 
-### 3 - Execute project:
+### 3 - Execute the project:
 ```
 python interface_devices.py
 ```
