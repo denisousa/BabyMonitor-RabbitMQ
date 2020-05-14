@@ -12,15 +12,13 @@ import time
 import itertools
 
 
-# Se insrever em todos os tópicos - OK
-# Receber todas as mensagens dos tópicos - OK
-# Mensagem tipo notificação, começa a contar tempo
-# Quando tempo alcança x, ele tenta enviar a msg que recebeu pra tv (get_Status)
-# Se TV bloqueada, stop application, envia notificação e start application.
-
 semaphore = threading.BoundedSemaphore()
 bindings = None
-
+time_no_response = 0
+init = 0
+count = 0
+event = threading.Event()
+    
 class Middleware(threading.Thread):
     def __init__(self, is_adapted):
         threading.Thread.__init__(self)
@@ -29,8 +27,6 @@ class Middleware(threading.Thread):
         self.channel = self.connection.channel()
         self.queue = 'middleware'
         self.channel.queue_declare(self.queue)
-        self.time_no_response = 0
-        self.count = 0
         self.is_adapted = is_adapted
 
     def get_bindings(self):
@@ -43,21 +39,26 @@ class Middleware(threading.Thread):
     def subscribe_in_all_queues(self):
         
         bindings = self.get_bindings()
-        
+        routes_bind = set()
         for i in range(len(bindings)):
             if 'monitor' not in bindings[i]['routing_key']:
-                self.channel.queue_bind(
-                    exchange=bindings[i]['source'], queue=self.queue, routing_key=bindings[i]['routing_key'])
+                routes_bind.add((bindings[i]['source'], bindings[i]['routing_key']))
+
+        for bind in routes_bind:
+            self.channel.queue_bind(
+                exchange=bind[0], queue=self.queue, routing_key=bind[1])
 
         return bindings
         
     def run(self):
-    
+        global semaphore, time_no_response, init, count
         def callback(ch, method, properties, body):
             print(" [MIDDLEWARE] Receive Topic: %r | Message: %r" % (method.routing_key, body))
             if 'tv' in str(method.routing_key):
-                self.time_no_response = 0
-                print('TV successfully received the message.')
+                time_no_response = 0
+                count = 0 
+                init = 0 
+                print('* TV successfully received the message.')
             
             else:
                 self.read_message(str(body), bindings)
@@ -68,33 +69,44 @@ class Middleware(threading.Thread):
         self.channel.start_consuming()
     
     def read_message(self, message, bindings):
-        global semaphore 
+        global semaphore, time_no_response, init, count
         if 'NOTIFICATION' in message:
-            self.time_no_response += 2
-            print(f'* Time No response: {self.time_no_response} seconds.')
-            if self.time_no_response >= 3:
+            count += 1
+            if count == 1:
+                init = time.time()
+                time_no_response = 0
+            else:
+                time_no_response = time.time() - init
+
+            print(f'* Time No response: {time_no_response} seconds.')
+            if time_no_response >= 3:
                 self.forward_message(message, bindings)
 
         if 'STATUS' in message:
             semaphore.acquire()
-            self.time_no_response = 0
+            time_no_response = 0
             semaphore.release() 
 
     def forward_message(self, message, bindings):
-        print('Status da tv: ', smart_tv_get_status())
-        if smart_tv_get_status():
-            self.publish_message(message, bindings)
-        else:
-            if self.is_adapted:
-                print('### Executing adaptation...')
-                print('Stopping application')
-                smart_tv_stop_app()
+
+        if smart_tv_is_on():
+            print('Status da tv: ', smart_tv_get_status())
+
+            if smart_tv_get_status():
                 self.publish_message(message, bindings)
-                time.sleep(2)
-                print('Reopening application')
-                smart_tv_start_app()
             else:
-                print('### Unable to forward to TV...')
+                if self.is_adapted:
+                    print('### Executing adaptation...')
+                    print('Stopping application')
+                    smart_tv_stop_app()
+                    self.publish_message(message, bindings)
+                    #time.sleep(5)
+                    '''smart_tv_start_app()
+                    print('Reopening application')'''
+                else:
+                    print('### Unable to forward to TV...')
+        else:
+            print('### Unable to forward to TV...')
 
     def publish_message(self, message, bindings):
         ex_rt = []
@@ -110,8 +122,13 @@ class Middleware(threading.Thread):
                 self.count = 0
                 smartphone_confirm_notification()
                 print('### Sending confirmation to monitor')
-                break
+                if self.is_adapted: 
+                    time.sleep(5)
+                    smart_tv_start_app()
+                    print('Reopening application')
+                return
             except:
+                print('Except publish...')
                 pass
 
 def main(is_adapted):

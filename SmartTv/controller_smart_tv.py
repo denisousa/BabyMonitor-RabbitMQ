@@ -3,22 +3,55 @@ import pika
 import sys
 import random
 sys.path.append('../')
-from construct_scenario import queue_smart_tv, routing_key_smart_tv, exchange_baby_monitor
-import model_smart_tv
+from model_smart_tv import Smart_TV
+import threading
 
+smart_tv = Smart_TV()
 
-def turn_on():
-    #Connection with RabbitMQ (Broker)
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(host='localhost'))
-    channel = connection.channel()
-    channel.queue_bind(
-            exchange=exchange_baby_monitor, queue=queue_smart_tv, routing_key=routing_key_smart_tv)
+def smart_tv_turn_on():    
+    global smart_tv
+    smart_tv.button_is_pressed = True
+    smart_tv.start()
+
+def smart_tv_turn_off():
+    global smart_tv
+
+    smart_tv.button_is_pressed = False
+
+def smart_tv_start_app():
+    global smart_tv
+
+    smart_tv.application = True
+    smart_tv.application_thread = threading.Thread(target=smart_tv.aplication_func, args=())
+    smart_tv.application_thread.start()
     
-    tv = Smart_TV(connection, channel)
-    tv.start_connection()
+    if smart_tv.application_thread.isAlive():
+        return 1
+    return 0
 
-#ver uma forma de setar essas coisas
-def start_app():
-    application = True
-    status = False
+def smart_tv_stop_app():
+    global smart_tv
+
+    smart_tv.application = False
+    smart_tv.status = True
+    #smart_tv.join()
+    
+def smart_tv_get_status():
+    global smart_tv
+
+    return smart_tv.status
+
+def smart_tv_get_application():
+    global smart_tv
+
+    return smart_tv.application
+
+def smart_tv_get_message():
+    global smart_tv
+
+    return smart_tv.message
+
+def smart_tv_is_on():
+    global smart_tv
+
+    return smart_tv.isAlive()
