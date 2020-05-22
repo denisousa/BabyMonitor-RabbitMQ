@@ -1,47 +1,41 @@
 #!/usr/bin/env python
-import pika
-import sys
-sys.path.append('../')
 from model_smartphone import SmartphoneConsumer, SmartphoneProducer
-import textwrap
-import threading
 
-smartphone_consumer = SmartphoneConsumer()
 
-#start conection
-def smartphone_start():
-	global smartphone_consumer
-	smartphone_consumer.button_is_pressed = True
-	smartphone_consumer.start()
-	
-	
-#stop conection
-def smartphone_stop():
-	global smartphone_consumer
-	smartphone_consumer.button_is_pressed = False
-	#smartphone_consumer.join()
+class Smartphone_controller:
+    def __init__(self):
+        self.smartphone_consumer = SmartphoneConsumer()
 
-def smartphone_confirm_notification():
-	global smartphone_consumer
-	smartphone_producer = None
-	
-	smartphone_consumer.is_notification = False
-	smartphone_producer = SmartphoneProducer()
-	smartphone_producer.start()
-	smartphone_producer.join()
+    def start(self):
+        self.smartphone_consumer
+        self.smartphone_consumer.button_is_pressed = True
+        self.smartphone_consumer.start()
 
-def smartphone_get_notification():
-	global smartphone_consumer
-	return smartphone_consumer.is_notification
+    def stop(self):
+        self.smartphone_consumer
+        self.smartphone_consumer.button_is_pressed = False
 
-def smartphone_get_message():
-	global smartphone_consumer
+    def confirm_notification(self):
+        self.smartphone_consumer
+        self.smartphone_producer = None
 
-	message = smartphone_consumer.message
-	if '{' in message:
-		return eval(message)
+        self.smartphone_consumer.is_notification = False
+        self.smartphone_producer = SmartphoneProducer()
+        self.smartphone_producer.start()
+        self.smartphone_producer.join()
 
-	message = message.replace("b'", "")
-	message = message.replace('"', '')
+    def get_notification(self):
+        self.smartphone_consumer
+        return self.smartphone_consumer.is_notification
 
-	return message
+    def get_message(self):
+        self.smartphone_consumer
+
+        message = self.smartphone_consumer.message
+        if "{" in message:
+            return eval(message)
+
+        message = message.replace("b'", "")
+        message = message.replace('"', "")
+
+        return message

@@ -1,52 +1,48 @@
 #!/usr/bin/env python
-import pika
-import sys
-sys.path.append('../')
-from model_baby_monitor import BabyMonitorConsumer, BabyMonitorProducer, notif_confirm
-import threading
+from model_baby_monitor import (BabyMonitorConsumer,
+                                BabyMonitorProducer,
+                                notif_confirm)
 
-monitor_producer = BabyMonitorProducer()
-monitor_consumer = BabyMonitorConsumer()
 
-#start conection
-def baby_monitor_start():
-    global monitor_producer, monitor_producer
+class Baby_monitor_controller:
+    def __init__(self):
 
-    monitor_producer = BabyMonitorProducer()
-    monitor_consumer = BabyMonitorConsumer()
+        self.monitor_producer = BabyMonitorProducer()
+        self.monitor_consumer = BabyMonitorConsumer()
 
-    monitor_producer.button_is_pressed = True
-    monitor_consumer.button_is_pressed = True
-    
-    monitor_consumer.start()
-    monitor_producer.start()      
-    
+    # start conection
+    def start(self):
 
-#stop conection
-def baby_monitor_stop():
-    global monitor_producer, monitor_consumer
+        self.monitor_producer = BabyMonitorProducer()
+        self.monitor_consumer = BabyMonitorConsumer()
 
-    monitor_producer.button_is_pressed = False
-    monitor_consumer.button_is_pressed = False
-    #monitor_consumer.join()
-    #monitor_producer.join()
+        self.monitor_producer.button_is_pressed = True
+        self.monitor_consumer.button_is_pressed = True
 
-#get data from db
-def baby_monitor_get_data():
-    global monitor_producer
+        self.monitor_consumer.start()
+        self.monitor_producer.start()
 
-    return monitor_producer.message
+    # stop conection
+    def stop(self):
 
-def baby_monitor_get_confirmation():
-    if notif_confirm[0]:
-        if notif_confirm[1]:
-            return 'Confirmation received.'
+        self.monitor_producer.button_is_pressed = False
+        self.monitor_consumer.button_is_pressed = False
+
+    # get data from db
+    def get_data(self):
+
+        return self.monitor_producer.message
+
+    # check if a confirmation has been sent
+    def get_confirmation(self):
+        if notif_confirm[0]:
+            if notif_confirm[1]:
+                return "Confirmation received."
+            else:
+                return "Pending notification."
         else:
-            return 'Pending notification.'
-    else:
-        return ''
+            return ""
 
-def baby_monitor_get_status():
-    global monitor_producer
-
-    return monitor_producer.get_data_baby_monitor()
+    # get info about baby
+    def get_status(self):
+        return self.monitor_producer.get_data_baby_monitor()

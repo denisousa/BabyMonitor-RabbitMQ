@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QLabel, QMainWindow, QApplication, QWidget, QVBoxLayout, QPushButton
 from PyQt5.QtGui import QPixmap
 from PyQt5 import QtGui
-from controller_baby_monitor import *
+from controller_baby_monitor import Baby_monitor_controller
 import sys
 import threading
 sys.path.append('../')
@@ -19,6 +19,7 @@ class Window(QMainWindow):
         self.InitWindow()
         self.button = False
         self.start_thread = False
+        self.bm_controller = Baby_monitor_controller()
 
     def button_pressed_start(self):
         baby_monitor_start()
