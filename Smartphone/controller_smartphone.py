@@ -1,41 +1,50 @@
-#!/usr/bin/env python
-from model_smartphone import SmartphoneConsumer, SmartphoneProducer
+from .conection_smartphone import SmartphoneConnection
 
 
-class Smartphone_controller:
+class SmartphoneController():
     def __init__(self):
-        self.smartphone_consumer = SmartphoneConsumer()
+        database = SmartphoneConnection()
 
-    def start(self):
-        self.smartphone_consumer
-        self.smartphone_consumer.button_is_pressed = True
-        self.smartphone_consumer.start()
+    def run(self):
+        if self.button_is_pressed:
+            print(" [*] Smartphone waiting for messages. To exit press CTRL+C")
 
-    def stop(self):
-        self.smartphone_consumer
-        self.smartphone_consumer.button_is_pressed = False
+            def callback_smartphone(ch, method, properties, body):
+                if "NOTIFICATION" in str(body):
+                    self.is_notification = True
+                    self.message = str(body)
+                else:
+                    self.is_notification = False
+                    self.message = str(body).replace('b"STATUS: ', "")
+                    self.message = self.message.replace('"', "")
 
-    def confirm_notification(self):
-        self.smartphone_consumer
-        self.smartphone_producer = None
+            self.channel.basic_consume(
+                queue=queue_smartphone,
+                on_message_callback=callback_smartphone,
+                auto_ack=True,
+            )
 
-        self.smartphone_consumer.is_notification = False
-        self.smartphone_producer = SmartphoneProducer()
-        self.smartphone_producer.start()
-        self.smartphone_producer.join()
+            self.channel.start_consuming()
 
-    def get_notification(self):
-        self.smartphone_consumer
-        return self.smartphone_consumer.is_notification
+            self.connection.close()
 
-    def get_message(self):
-        self.smartphone_consumer
 
-        message = self.smartphone_consumer.message
-        if "{" in message:
-            return eval(message)
+class SmartphoneProducer(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.connection = pika.BlockingConnection(
+            pika.ConnectionParameters(host="localhost")
+        )
+        self.channel = self.connection.channel()
+        self.channel.exchange_declare(
+            exchange=exchange_baby_monitor, exchange_type="direct"
+        )
+        self.button_is_pressed = False
 
-        message = message.replace("b'", "")
-        message = message.replace('"', "")
-
-        return message
+    def run(self):
+        message = "CONFIRMATION: Notification received!"
+        self.channel.basic_publish(
+            exchange=exchange_baby_monitor,
+            routing_key=routing_key_baby_monitor,
+            body=message,
+        )
