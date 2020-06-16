@@ -12,6 +12,13 @@ max_no_changes = random.randint(3, 7)
 # flag >= 1: status sem alteração
 
 
+# Configuração:
+# Máximo de repetições do status (bom)
+# Probabilidade da criança ficar mal
+# Tempo de confirmação do usuário para o celular
+# O tempo para acudir a criança (Tempo de exibição da alerta na TV)
+
+
 def count(function):
     def wrapped(monitor, flag):
 
@@ -39,7 +46,6 @@ def count(function):
 
     wrapped.calls = 0
     return wrapped
-
 
 @count
 def data_from_baby(flag, monitor):
