@@ -1,47 +1,50 @@
-#!/usr/bin/env python
-import pika
-import sys
-sys.path.append('../')
-from model_smartphone import SmartphoneConsumer, SmartphoneProducer
-import textwrap
-import threading
+from .conection_smartphone import SmartphoneConnection
 
-smartphone_consumer = SmartphoneConsumer()
 
-#start conection
-def smartphone_start():
-	global smartphone_consumer
-	smartphone_consumer.button_is_pressed = True
-	smartphone_consumer.start()
-	
-	
-#stop conection
-def smartphone_stop():
-	global smartphone_consumer
-	smartphone_consumer.button_is_pressed = False
-	#smartphone_consumer.join()
+class SmartphoneController():
+    def __init__(self):
+        database = SmartphoneConnection()
 
-def smartphone_confirm_notification():
-	global smartphone_consumer
-	smartphone_producer = None
-	
-	smartphone_consumer.is_notification = False
-	smartphone_producer = SmartphoneProducer()
-	smartphone_producer.start()
-	smartphone_producer.join()
+    def run(self):
+        if self.button_is_pressed:
+            print(" [*] Smartphone waiting for messages. To exit press CTRL+C")
 
-def smartphone_get_notification():
-	global smartphone_consumer
-	return smartphone_consumer.is_notification
+            def callback_smartphone(ch, method, properties, body):
+                if "NOTIFICATION" in str(body):
+                    self.is_notification = True
+                    self.message = str(body)
+                else:
+                    self.is_notification = False
+                    self.message = str(body).replace('b"STATUS: ', "")
+                    self.message = self.message.replace('"', "")
 
-def smartphone_get_message():
-	global smartphone_consumer
+            self.channel.basic_consume(
+                queue=queue_smartphone,
+                on_message_callback=callback_smartphone,
+                auto_ack=True,
+            )
 
-	message = smartphone_consumer.message
-	if '{' in message:
-		return eval(message)
+            self.channel.start_consuming()
 
-	message = message.replace("b'", "")
-	message = message.replace('"', '')
+            self.connection.close()
 
-	return message
+
+class SmartphoneProducer(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.connection = pika.BlockingConnection(
+            pika.ConnectionParameters(host="localhost")
+        )
+        self.channel = self.connection.channel()
+        self.channel.exchange_declare(
+            exchange=exchange_baby_monitor, exchange_type="direct"
+        )
+        self.button_is_pressed = False
+
+    def run(self):
+        message = "CONFIRMATION: Notification received!"
+        self.channel.basic_publish(
+            exchange=exchange_baby_monitor,
+            routing_key=routing_key_baby_monitor,
+            body=message,
+        )

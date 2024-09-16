@@ -1,57 +1,44 @@
 #!/usr/bin/env python
-import pika
 import sys
-import random
-sys.path.append('../')
+sys.path.append("../")
 from model_smart_tv import Smart_TV
 import threading
 
-smart_tv = Smart_TV()
 
-def smart_tv_turn_on():    
-    global smart_tv
-    smart_tv.button_is_pressed = True
-    smart_tv.start()
+class Smart_tv_controller:
+    def __init__(self):
+        self.smart_tv = Smart_TV()
 
-def smart_tv_turn_off():
-    global smart_tv
+    def turn_on(self):
+        self.smart_tv.button_is_pressed = True
+        self.smart_tv.start()
 
-    smart_tv.button_is_pressed = False
+    def turn_off(self):
+        self.smart_tv.button_is_pressed = False
 
-def smart_tv_start_app():
-    global smart_tv
+    def start_app(self):
+        self.smart_tv.application = True
+        self.smart_tv.application_thread = threading.Thread(
+            target=self.smart_tv.application_func, args=()
+        )
+        self.smart_tv.application_thread.start()
 
-    smart_tv.application = True
-    smart_tv.application_thread = threading.Thread(target=smart_tv.aplication_func, args=())
-    smart_tv.application_thread.start()
-    
-    if smart_tv.application_thread.isAlive():
-        return 1
-    return 0
+        if self.smart_tv.application_thread.isAlive():
+            return 1
+        return 0
 
-def smart_tv_stop_app():
-    global smart_tv
+    def stop_app(self):
+        self.smart_tv.application = False
+        self.smart_tv.status = True
 
-    smart_tv.application = False
-    smart_tv.status = True
-    #smart_tv.join()
-    
-def smart_tv_get_status():
-    global smart_tv
+    def get_status(self):
+        return self.smart_tv.status
 
-    return smart_tv.status
+    def get_application(self):
+        return self.smart_tv.application
 
-def smart_tv_get_application():
-    global smart_tv
+    def get_message(self):
+        return self.smart_tv.message
 
-    return smart_tv.application
-
-def smart_tv_get_message():
-    global smart_tv
-
-    return smart_tv.message
-
-def smart_tv_is_on():
-    global smart_tv
-
-    return smart_tv.isAlive()
+    def is_on(self):
+        return self.smart_tv.isAlive()

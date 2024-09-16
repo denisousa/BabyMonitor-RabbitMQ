@@ -46,3 +46,6 @@ __pycache__
 */__pycache__
 .idea
 */idea
+.env
+env
+*/env
